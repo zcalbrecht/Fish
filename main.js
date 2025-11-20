@@ -9,6 +9,9 @@ let draggingPad = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 let lastFrameTime = typeof performance !== "undefined" ? performance.now() : Date.now();
+let lastDragSampleTime = 0;
+let dragVelocityX = 0;
+let dragVelocityY = 0;
 
 function resize() {
     width = canvas.width = window.innerWidth;
@@ -30,10 +33,16 @@ function init() {
     });
     window.addEventListener("mousemove", (e) => {
         if (!draggingPad) return;
-        draggingPad.setPosition(
-            e.clientX + dragOffsetX,
-            e.clientY + dragOffsetY
-        );
+        const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+        const dt = Math.max((now - lastDragSampleTime) / 1000, 0.001);
+        const prevX = draggingPad.x;
+        const prevY = draggingPad.y;
+        const nextX = e.clientX + dragOffsetX;
+        const nextY = e.clientY + dragOffsetY;
+        draggingPad.setPosition(nextX, nextY);
+        dragVelocityX = (draggingPad.x - prevX) / dt;
+        dragVelocityY = (draggingPad.y - prevY) / dt;
+        lastDragSampleTime = now;
     });
     window.addEventListener("mouseup", endPadDrag);
     window.addEventListener("mouseleave", endPadDrag);
@@ -78,7 +87,22 @@ function init() {
         const x = Math.random() * width;
         const y = Math.random() * height;
         const size = 40 + Math.random() * 40;
-        lilyPads.push(new LilyPad(x, y, size));
+        
+        const pad = new LilyPad(x, y, size);
+        lilyPads.push(pad);
+
+        // 20% chance to spawn a flower buddy nearby
+        if (Math.random() < 0.2) {
+            // Pick a spot next to the pad (size + margin)
+            const angle = Math.random() * Math.PI * 2;
+            const dist = size + 15 + Math.random() * 20;
+            const fx = x + Math.cos(angle) * dist;
+            const fy = y + Math.sin(angle) * dist;
+            
+            // Create flower instance
+            const flower = new Flower(fx, fy, size * 0.6);
+            lilyPads.push(flower);
+        }
     }
 
     dragonflies = [];
@@ -112,6 +136,11 @@ function animate() {
 
     for (const pad of lilyPads) {
         pad.update(dt, now);
+    }
+
+    resolveLilyPadCollisions();
+
+    for (const pad of lilyPads) {
         pad.draw(ctx);
     }
 
@@ -262,8 +291,13 @@ function beginPadDrag(x, y) {
         const pad = lilyPads[i];
         if (pad.containsPoint(x, y)) {
             draggingPad = pad;
+            draggingPad.beginDrag();
             dragOffsetX = pad.x - x;
             dragOffsetY = pad.y - y;
+            dragVelocityX = 0;
+            dragVelocityY = 0;
+            lastDragSampleTime =
+                typeof performance !== "undefined" ? performance.now() : Date.now();
             lilyPads.splice(i, 1);
             lilyPads.push(pad);
             return true;
@@ -273,5 +307,47 @@ function beginPadDrag(x, y) {
 }
 
 function endPadDrag() {
+    if (!draggingPad) return;
+    draggingPad.releaseMomentum(dragVelocityX, dragVelocityY);
     draggingPad = null;
+}
+
+function resolveLilyPadCollisions() {
+    for (let i = 0; i < lilyPads.length; i++) {
+        for (let j = i + 1; j < lilyPads.length; j++) {
+            const a = lilyPads[i];
+            const b = lilyPads[j];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const dist = Math.hypot(dx, dy) || 0.0001;
+            const minDist = a.size + b.size;
+            if (dist >= minDist) continue;
+
+            const overlap = minDist - dist;
+            const nx = dx / dist;
+            const ny = dy / dist;
+
+            const aFlex = a.isDragging ? 0.2 : 0.5;
+            const bFlex = b.isDragging ? 0.2 : 0.5;
+            const flexSum = aFlex + bFlex;
+
+            const moveA = overlap * (bFlex / flexSum);
+            const moveB = overlap * (aFlex / flexSum);
+
+            a.x -= nx * moveA;
+            a.y -= ny * moveA;
+            b.x += nx * moveB;
+            b.y += ny * moveB;
+
+            const relativeNormalVel =
+                (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+            if (relativeNormalVel > 0) {
+                const impulse = relativeNormalVel * 0.5;
+                a.vx -= impulse * nx;
+                a.vy -= impulse * ny;
+                b.vx += impulse * nx;
+                b.vy += impulse * ny;
+            }
+        }
+    }
 }
