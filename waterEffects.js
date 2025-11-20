@@ -37,6 +37,8 @@ class WaterPolygonEffect extends Effect {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
+        const prevFilter = ctx.filter || 'none';
+        ctx.filter = 'blur(5px)';
         ctx.fillStyle = `hsla(${this.hue}, 60%, 20%, ${this.opacity})`;
 
         ctx.beginPath();
@@ -49,6 +51,7 @@ class WaterPolygonEffect extends Effect {
         }
         ctx.closePath();
         ctx.fill();
+        ctx.filter = prevFilter;
         ctx.restore();
     }
 }
