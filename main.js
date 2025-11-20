@@ -182,7 +182,7 @@ function animate() {
     }
 
     for (let i = ripples.length - 1; i >= 0; i--) {
-        ripples[i].update();
+        ripples[i].update(dt);
         ripples[i].draw(ctx);
         if (ripples[i].isFinished()) {
             ripples.splice(i, 1);

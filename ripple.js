@@ -5,12 +5,14 @@ class Ripple {
         this.radius = 0;
         this.maxRadius = 80;
         this.alpha = 0.4;
-        this.speed = 0.5;
+        this.speed = 30; // Units per second (was 0.5 per frame at 60fps = 30/sec)
         this.lineWidth = 6;
     }
 
-    update() {
-        this.radius += this.speed;
+    update(dt = 0.016) {
+        // Time-based animation: speed is in units per second
+        // Default dt assumes ~60fps if not provided
+        this.radius += this.speed * dt;
     }
 
     draw(ctx) {
