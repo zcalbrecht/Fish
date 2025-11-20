@@ -5,6 +5,9 @@ let fishes = [];
 let lilyPads = [];
 let ripples = [];
 let dragonflies = [];
+let draggingPad = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
 
 function resize() {
     width = canvas.width = window.innerWidth;
@@ -17,26 +20,36 @@ function init() {
 
     // Click to set target and spawn ripple
     window.addEventListener("mousedown", (e) => {
+        if (beginPadDrag(e.clientX, e.clientY)) {
+            return;
+        }
         for (const fish of fishes) {
             fish.setTarget(e.clientX, e.clientY);
         }
         ripples.push(new Ripple(e.clientX, e.clientY));
     });
+    window.addEventListener("mousemove", (e) => {
+        if (!draggingPad) return;
+        draggingPad.setPosition(
+            e.clientX + dragOffsetX,
+            e.clientY + dragOffsetY
+        );
+    });
+    window.addEventListener("mouseup", endPadDrag);
+    window.addEventListener("mouseleave", endPadDrag);
 
     fishes = [];
-    // Fish 1: Gold/Orange
+
     fishes.push(
         new Fish(width / 2, height / 2, { color: { h: 35, s: 90, l: 50 } })
     );
 
-    // Fish 2: White/Silver (Koi style)
     fishes.push(
         new Fish(width / 2 + 50, height / 2 + 50, {
             color: { h: 200, s: 10, l: 90 },
         })
     );
 
-    // Fish 3: White and Orange Spotted (Kohaku)
     fishes.push(
         new Fish(width / 2 - 50, height / 2 + 20, {
             color: { h: 0, s: 0, l: 95 }, // White base
@@ -45,7 +58,6 @@ function init() {
         })
     );
 
-    // Fish 4: Tricolor (Showa/Sanke) - White, Red, Black
     fishes.push(
         new Fish(width / 2, height / 2 - 50, {
             color: { h: 0, s: 0, l: 95 }, // White base
@@ -265,3 +277,22 @@ function drawPondEffect() {
 
 init();
 animate();
+
+function beginPadDrag(x, y) {
+    for (let i = lilyPads.length - 1; i >= 0; i--) {
+        const pad = lilyPads[i];
+        if (pad.containsPoint(x, y)) {
+            draggingPad = pad;
+            dragOffsetX = pad.x - x;
+            dragOffsetY = pad.y - y;
+            lilyPads.splice(i, 1);
+            lilyPads.push(pad);
+            return true;
+        }
+    }
+    return false;
+}
+
+function endPadDrag() {
+    draggingPad = null;
+}
