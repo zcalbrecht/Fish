@@ -115,13 +115,18 @@ class LilyPad {
     }
 
     draw(ctx) {
+        const time = Date.now() / 5000;
+        const wobbleRadius = this.size * 0.16;
+        const wobbleX = Math.sin(time + this.stemPhase) * wobbleRadius;
+        const wobbleY = Math.cos(time * 1.3 + this.stemPhase) * wobbleRadius;
+
         ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
+        ctx.translate(this.x + wobbleX, this.y + wobbleY);
+        ctx.rotate(this.angle + Math.sin(time * 1.2 + this.stemPhase) * 0.05);
 
         // --- Draw Animated Stem ---
         ctx.save();
-        const time = Date.now() / 4000;
+        const stemTime = Date.now() / 4000;
         const basePath = this.stemPath;
         const lastPoint = basePath[basePath.length - 1];
         const grad = ctx.createLinearGradient(0, 0, lastPoint.x, lastPoint.y);
@@ -134,7 +139,7 @@ class LilyPad {
         ctx.lineJoin = "round";
 
         ctx.beginPath();
-        const startWave = Math.sin(time + this.stemPhase) * 3;
+        const startWave = Math.sin(stemTime + this.stemPhase) * 3;
         ctx.moveTo(startWave, 0);
 
         for (let i = 1; i < basePath.length; i++) {
@@ -151,7 +156,7 @@ class LilyPad {
 
             // Wave offset grows with distance but clamp amplitude
             const targetAmp = 6 + t * 14;
-            const wave = Math.sin(time + this.stemPhase + t * 6) * targetAmp;
+            const wave = Math.sin(stemTime + this.stemPhase + t * 6) * targetAmp;
             const offsetX = curr.x + nx * wave;
             const offsetY = curr.y + ny * wave;
 
