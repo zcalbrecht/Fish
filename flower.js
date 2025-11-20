@@ -35,22 +35,90 @@ class Flower extends LilyPad {
     draw(ctx) {
         // Skip stem drawing
         
-        ctx.save();
-        ctx.translate(this.anchorX, this.anchorY);
-        ctx.rotate(this.currentRotation);
-
-        // Skip drawing the green pad base, just draw the flower
-        // But we need hit detection... actually the prompt implies
-        // it's a "flower instance" that moves and can be bumped.
-        // So it acts like a round object. We can draw a faint shadow or small base?
-        // Let's draw just the flower parts centered.
-        
-        this.drawFlower(ctx);
-
-        ctx.restore();
+        this.withTransform(ctx, () => {
+            // Skip drawing the green pad base, just draw the flower
+            // But we need hit detection... actually the prompt implies
+            // it's a "flower instance" that moves and can be bumped.
+            // So it acts like a round object. We can draw a faint shadow or small base?
+            // Let's draw just the flower parts centered.
+            
+            this.drawFlower(ctx);
+        }, { x: this.anchorX, y: this.anchorY, angle: this.currentRotation });
     }
 
-    // Re-use drawFlower from LilyPad (inherited), but we need to make sure
-    // LilyPad doesn't try to draw a flower on itself anymore.
+    drawFlower(ctx) {
+        ctx.save();
+        ctx.rotate(this.flowerOffsetAngle);
+
+        // Shadow
+        ctx.save();
+        ctx.translate(5, 5);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+        
+        const angleStep = (Math.PI * 2) / this.petalCount;
+        
+        for (let i = 0; i < this.petalCount; i++) {
+            ctx.save();
+            ctx.rotate(i * angleStep);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(this.flowerSize * 0.4, this.flowerSize * 0.4, this.flowerSize, 0);
+            ctx.quadraticCurveTo(this.flowerSize * 0.4, -this.flowerSize * 0.4, 0, 0);
+            ctx.fill();
+            ctx.restore();
+        }
+        ctx.restore(); 
+
+        // Petals
+        ctx.fillStyle = this.flowerColor;
+        for (let i = 0; i < this.petalCount; i++) {
+            ctx.save();
+            ctx.rotate(i * angleStep);
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(this.flowerSize * 0.4, this.flowerSize * 0.4, this.flowerSize, 0);
+            ctx.quadraticCurveTo(this.flowerSize * 0.4, -this.flowerSize * 0.4, 0, 0);
+            ctx.fill();
+            
+            // Lighter/Subtler outline
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        // Inner Petals
+        ctx.rotate(angleStep / 2);
+        ctx.fillStyle = this.flowerColor; 
+        
+        for (let i = 0; i < this.petalCount; i++) {
+            ctx.save();
+            ctx.rotate(i * angleStep);
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            const s = this.flowerSize * 0.7;
+            ctx.quadraticCurveTo(s * 0.4, s * 0.4, s, 0);
+            ctx.quadraticCurveTo(s * 0.4, -s * 0.4, 0, 0);
+            ctx.fill();
+            
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        // Center
+        ctx.fillStyle = this.flowerCenter;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.flowerSize * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
 }
 

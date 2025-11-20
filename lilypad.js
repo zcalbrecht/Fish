@@ -1,7 +1,6 @@
-class LilyPad {
+class LilyPad extends Item {
     constructor(x, y, size) {
-        this.x = x;
-        this.y = y;
+        super(x, y);
         this.size = size;
         this.angle = Math.random() * Math.PI * 2;
         // Random shade of green
@@ -10,9 +9,7 @@ class LilyPad {
         // Random notch size (0.2 to 1.5 times the base 0.15 PI)
         this.notchWidth = (0.1 + Math.random() * 1.6) * 0.14;
 
-        // Motion properties
-        this.vx = 0;
-        this.vy = 0;
+        // Motion properties (vx, vy inherited from Item)
         this.isDragging = false;
         this.momentumFriction = 8;
 
@@ -36,10 +33,6 @@ class LilyPad {
         return Math.hypot(x - this.x, y - this.y) <= this.size;
     }
 
-    setPosition(x, y) {
-        this.x = x;
-        this.y = y;
-    }
 
     beginDrag() {
         this.isDragging = true;
@@ -58,6 +51,7 @@ class LilyPad {
     }
 
     update(dt, now = this.getNow()) {
+        this.updatePopIn(dt);
         this.integrateMomentum(dt);
         this.updateTransform(now);
         this.stem.setAnchor(this.anchorX, this.anchorY);
@@ -89,121 +83,51 @@ class LilyPad {
     }
 
     draw(ctx) {
-        this.stem.draw(ctx);
-
         ctx.save();
+        // Scale the stem around the anchor point
+        // We translate to anchor, scale, then translate back? 
+        // Actually, stem nodes are absolute positions. 
+        // But we can scale the entire context around the anchor point.
         ctx.translate(this.anchorX, this.anchorY);
-        ctx.rotate(this.currentRotation);
-
-        ctx.fillStyle = this.color;
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.lineWidth = 2;
-
-        // Draw lily pad shape (circle with a wedge cut out)
-        ctx.beginPath();
-        // Start at the notch
-        ctx.arc(0, 0, this.size, this.notchWidth * Math.PI, (2 - this.notchWidth) * Math.PI);
-        ctx.lineTo(0, 0);
-        ctx.closePath();
-
-        ctx.fill();
-        ctx.stroke();
-
-        // Add some veins
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-        ctx.lineWidth = 1;
-
-        const startAngle = this.notchWidth * Math.PI;
-        const endAngle = (2 - this.notchWidth) * Math.PI;
-        const totalAngle = endAngle - startAngle;
-        const veinCount = 5;
-
-        for (let i = 0; i < veinCount; i++) {
-            const t = (i + 0.5) / veinCount;
-            const veinAngle = startAngle + t * totalAngle;
-            
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(Math.cos(veinAngle) * this.size * 0.9, Math.sin(veinAngle) * this.size * 0.9);
-            ctx.stroke();
-        }
-        
+        ctx.scale(this.popInScale, this.popInScale);
+        ctx.translate(-this.anchorX, -this.anchorY);
+        this.stem.draw(ctx);
         ctx.restore();
-    }
 
-    drawFlower(ctx) {
-        // Helper for subclasses (Flower.js uses this)
-        ctx.save();
-        ctx.rotate(this.flowerOffsetAngle);
+        this.withTransform(ctx, () => {
+            ctx.fillStyle = this.color;
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.lineWidth = 2;
 
-        // Shadow
-        ctx.save();
-        ctx.translate(5, 5);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.shadowBlur = 5;
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-        
-        const angleStep = (Math.PI * 2) / this.petalCount;
-        
-        for (let i = 0; i < this.petalCount; i++) {
-            ctx.save();
-            ctx.rotate(i * angleStep);
+            // Draw lily pad shape (circle with a wedge cut out)
             ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.quadraticCurveTo(this.flowerSize * 0.4, this.flowerSize * 0.4, this.flowerSize, 0);
-            ctx.quadraticCurveTo(this.flowerSize * 0.4, -this.flowerSize * 0.4, 0, 0);
-            ctx.fill();
-            ctx.restore();
-        }
-        ctx.restore(); 
+            // Start at the notch
+            ctx.arc(0, 0, this.size, this.notchWidth * Math.PI, (2 - this.notchWidth) * Math.PI);
+            ctx.lineTo(0, 0);
+            ctx.closePath();
 
-        // Petals
-        ctx.fillStyle = this.flowerColor;
-        for (let i = 0; i < this.petalCount; i++) {
-            ctx.save();
-            ctx.rotate(i * angleStep);
-            
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.quadraticCurveTo(this.flowerSize * 0.4, this.flowerSize * 0.4, this.flowerSize, 0);
-            ctx.quadraticCurveTo(this.flowerSize * 0.4, -this.flowerSize * 0.4, 0, 0);
             ctx.fill();
-            
-            // Lighter/Subtler outline
-            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-            ctx.lineWidth = 0.5;
             ctx.stroke();
-            
-            ctx.restore();
-        }
 
-        // Inner Petals
-        ctx.rotate(angleStep / 2);
-        ctx.fillStyle = this.flowerColor; 
-        
-        for (let i = 0; i < this.petalCount; i++) {
-            ctx.save();
-            ctx.rotate(i * angleStep);
-            
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            const s = this.flowerSize * 0.7;
-            ctx.quadraticCurveTo(s * 0.4, s * 0.4, s, 0);
-            ctx.quadraticCurveTo(s * 0.4, -s * 0.4, 0, 0);
-            ctx.fill();
-            
-            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-            ctx.stroke();
-            
-            ctx.restore();
-        }
+            // Add some veins
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.lineWidth = 1;
 
-        // Center
-        ctx.fillStyle = this.flowerCenter;
-        ctx.beginPath();
-        ctx.arc(0, 0, this.flowerSize * 0.25, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
+            const startAngle = this.notchWidth * Math.PI;
+            const endAngle = (2 - this.notchWidth) * Math.PI;
+            const totalAngle = endAngle - startAngle;
+            const veinCount = 5;
+
+            for (let i = 0; i < veinCount; i++) {
+                const t = (i + 0.5) / veinCount;
+                const veinAngle = startAngle + t * totalAngle;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(veinAngle) * this.size * 0.9, Math.sin(veinAngle) * this.size * 0.9);
+                ctx.stroke();
+            }
+        }, { x: this.anchorX, y: this.anchorY, angle: this.currentRotation });
     }
 }
+

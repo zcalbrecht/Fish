@@ -18,10 +18,9 @@ const FISH_CONFIG = {
     }
 };
 
-class Fish {
+class Fish extends Item {
     constructor(x, y, options = {}) {
-        this.x = x;
-        this.y = y;
+        super(x, y);
 
         // Handle legacy color argument or new options object
         let config = options;
@@ -108,6 +107,12 @@ class Fish {
     }
 
     update() {
+        // Update pop-in animation
+        // Assuming ~60fps, dt is roughly 1/60 = 0.016
+        // Since Fish.update() doesn't take dt, we'll estimate it or update Main to pass it.
+        // For now, fixed step estimation.
+        this.updatePopIn(0.016);
+
         // Head follows target
         const head = this.segments[0];
         const dx = this.target.x - head.x;
@@ -186,115 +191,108 @@ class Fish {
         const pectoralSegIndex = Math.floor(this.segments.length * 0.3);
         const pectoralSeg = this.segments[pectoralSegIndex];
         if (pectoralSeg) {
-            ctx.save();
-            ctx.translate(pectoralSeg.x, pectoralSeg.y);
-            ctx.rotate(pectoralSeg.angle);
-
-            ctx.fillStyle = `hsl(${this.color.h}, ${this.color.s}%, ${this.color.l}%)`;
-
             // Scale fins with body width
             const finScale = this.bodyWidth.middle / FISH_CONFIG.bodyWidth.middle; 
-            // Or just rely on context scaling? No, manually scale points.
-            // Actually, simpler to just scale the context.
-            ctx.scale(finScale, finScale);
 
-            // Left fin
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.quadraticCurveTo(-10, 20, -20, 25);
-            ctx.quadraticCurveTo(-10, 10, 0, 5);
-            ctx.fill();
+            this.withTransform(ctx, () => {
+                ctx.fillStyle = `hsl(${this.color.h}, ${this.color.s}%, ${this.color.l}%)`;
 
-            // Right fin
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.quadraticCurveTo(-10, -20, -20, -25);
-            ctx.quadraticCurveTo(-10, -10, 0, -5);
-            ctx.fill();
+                // Left fin
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(-10, 20, -20, 25);
+                ctx.quadraticCurveTo(-10, 10, 0, 5);
+                ctx.fill();
 
-            ctx.restore();
+                // Right fin
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(-10, -20, -20, -25);
+                ctx.quadraticCurveTo(-10, -10, 0, -5);
+                ctx.fill();
+            }, { x: pectoralSeg.x, y: pectoralSeg.y, angle: pectoralSeg.angle, scale: finScale });
         }
 
         // Tail fin
         const tailSeg = this.segments[this.segments.length - 1];
         if (tailSeg) {
-            ctx.save();
-            ctx.translate(tailSeg.x, tailSeg.y);
-            ctx.rotate(tailSeg.angle);
-
-            ctx.fillStyle = `hsl(${this.color.h}, ${this.color.s}%, ${this.color.l}%)`;
-            
             const tailScale = this.bodyWidth.middle / FISH_CONFIG.bodyWidth.middle;
-            ctx.scale(tailScale, tailScale);
 
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.quadraticCurveTo(-30, 15, -40, 30);
-            ctx.quadraticCurveTo(-30, 0, -40, -30);
-            ctx.quadraticCurveTo(-30, -15, 0, 0);
-            ctx.fill();
-
-            ctx.restore();
+            this.withTransform(ctx, () => {
+                ctx.fillStyle = `hsl(${this.color.h}, ${this.color.s}%, ${this.color.l}%)`;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(-30, 15, -40, 30);
+                ctx.quadraticCurveTo(-30, 0, -40, -30);
+                ctx.quadraticCurveTo(-30, -15, 0, 0);
+                ctx.fill();
+            }, { x: tailSeg.x, y: tailSeg.y, angle: tailSeg.angle, scale: tailScale });
         }
 
         // Draw body layers
         for (let i = this.segments.length - 1; i >= 0; i--) {
             const seg = this.segments[i];
 
-            ctx.save();
-            ctx.translate(seg.x, seg.y);
-            ctx.rotate(seg.angle);
-
-            const t = i / (this.segments.length - 1);
-
-            let size;
-            // Use instance bodyWidth
-            const w = this.bodyWidth;
-
-            if (t < w.taperPoint) {
-                const progress = t / w.taperPoint;
-                size = w.head + progress * (w.middle - w.head);
-            } else {
-                const progress = (t - w.taperPoint) / (1 - w.taperPoint);
-                size = w.middle - progress * (w.middle - w.tail);
-            }
-
-            const swimOffset = Math.sin(Date.now() / 150 + i * 0.5 + this.x * 0.1) * (i * 0.05);
-            ctx.rotate(swimOffset * 0.3);
-
-            // Pattern logic
-            let segmentColor = this.color;
+            // Note: 'angle' here needs to include the swim offset if possible, 
+            // but swimOffset was applied AFTER base rotation in original code via a second rotate.
+            // withTransform supports single rotation. We can sum them or nest them.
+            // Original: translate -> rotate(angle) -> rotate(swimOffset)
+            // Which is equivalent to rotate(angle + swimOffset).
             
-            if (this.pattern === 'spots' && this.patternColor) {
-                // Kohaku pattern logic: Large patches
-                if ((t > 0.1 && t < 0.35) || (t > 0.55 && t < 0.8)) {
-                    segmentColor = this.patternColor;
+            const swimOffset = Math.sin(Date.now() / 150 + i * 0.5 + this.x * 0.1) * (i * 0.05) * 0.3;
+            
+            this.withTransform(ctx, () => {
+                const t = i / (this.segments.length - 1);
+
+                let size;
+                // Use instance bodyWidth
+                const w = this.bodyWidth;
+
+                if (t < w.taperPoint) {
+                    const progress = t / w.taperPoint;
+                    size = w.head + progress * (w.middle - w.head);
+                } else {
+                    const progress = (t - w.taperPoint) / (1 - w.taperPoint);
+                    size = w.middle - progress * (w.middle - w.tail);
                 }
-            } else if (this.pattern === 'tricolor' && this.patternColor && this.patternColor2) {
-                // Showa/Sanke pattern logic: Patches of two colors on base
-                // Base is usually white (this.color)
-                // PatternColor is Red/Orange
-                // PatternColor2 is Black
+
+                // Pattern logic
+                let segmentColor = this.color;
                 
-                // Red patches (Head, Mid-body)
-                if ((t > 0.05 && t < 0.25) || (t > 0.45 && t < 0.65)) {
-                    segmentColor = this.patternColor;
+                if (this.pattern === 'spots' && this.patternColor) {
+                    // Kohaku pattern logic: Large patches
+                    if ((t > 0.1 && t < 0.35) || (t > 0.55 && t < 0.8)) {
+                        segmentColor = this.patternColor;
+                    }
+                } else if (this.pattern === 'tricolor' && this.patternColor && this.patternColor2) {
+                    // Showa/Sanke pattern logic: Patches of two colors on base
+                    // Base is usually white (this.color)
+                    // PatternColor is Red/Orange
+                    // PatternColor2 is Black
+                    
+                    // Red patches (Head, Mid-body)
+                    if ((t > 0.05 && t < 0.25) || (t > 0.45 && t < 0.65)) {
+                        segmentColor = this.patternColor;
+                    }
+                    // Black patches (Shoulders, Tail) - distinct from red
+                    // Using different ranges to create "sumi" (ink) spots
+                    else if ((t > 0.25 && t < 0.35) || (t > 0.7 && t < 0.85)) {
+                        segmentColor = this.patternColor2;
+                    }
                 }
-                // Black patches (Shoulders, Tail) - distinct from red
-                // Using different ranges to create "sumi" (ink) spots
-                else if ((t > 0.25 && t < 0.35) || (t > 0.7 && t < 0.85)) {
-                    segmentColor = this.patternColor2;
+
+                let lightness = segmentColor.l + (1 - t) * 10 - t * 10;
+                if (this.pattern === 'silhouette') {
+                    lightness = segmentColor.l; // Solid color, no gradient
                 }
-            }
+                
+                ctx.fillStyle = `hsl(${segmentColor.h}, ${segmentColor.s}%, ${lightness}%)`;
 
-            const lightness = segmentColor.l + (1 - t) * 10 - t * 10;
-            ctx.fillStyle = `hsl(${segmentColor.h}, ${segmentColor.s}%, ${lightness}%)`;
-
-            ctx.beginPath();
-            ctx.ellipse(0, 0, size * 1.2, size, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
+                ctx.beginPath();
+                ctx.ellipse(0, 0, size * 1.2, size, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }, { x: seg.x, y: seg.y, angle: seg.angle + swimOffset });
         }
     }
 }

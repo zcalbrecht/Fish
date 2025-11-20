@@ -1,8 +1,9 @@
-class Dragonfly {
+class Dragonfly extends Item {
     constructor(canvasWidth, canvasHeight) {
+        super(0, 0);
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
-        this.active = true;
+        // this.active is inherited and true by default
 
         // Random size (scale factor)
         // Base size is small, this multiplier makes them vary
@@ -60,6 +61,7 @@ class Dragonfly {
     }
 
     update() {
+        this.updatePopIn(0.016);
         // Move linear
         this.x += this.vx;
         this.y += this.vy;
@@ -81,28 +83,29 @@ class Dragonfly {
 
         // --- Draw Shadow ---
         // Shadow is drawn on the water surface (offset position)
-        ctx.save();
-        ctx.translate(this.x + this.shadowOffset.x, this.y + this.shadowOffset.y);
-        ctx.rotate(this.angle);
-        ctx.scale(this.scale, this.scale);
-
-        // Shadow style: Blur and dark
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        // Draw simplified shape for shadow
-        this.drawBody(ctx, true);
-        this.drawWings(ctx, true);
-        ctx.restore();
+        this.withTransform(ctx, () => {
+            // Shadow style: Blur and dark
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            // Draw simplified shape for shadow
+            this.drawBody(ctx, true);
+            this.drawWings(ctx, true);
+        }, { 
+            x: this.x + this.shadowOffset.x, 
+            y: this.y + this.shadowOffset.y, 
+            angle: this.angle, 
+            scale: this.scale 
+        });
 
         // --- Draw Dragonfly ---
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
-        ctx.scale(this.scale, this.scale);
-
-        this.drawBody(ctx, false);
-        this.drawWings(ctx, false);
-
-        ctx.restore();
+        this.withTransform(ctx, () => {
+            this.drawBody(ctx, false);
+            this.drawWings(ctx, false);
+        }, { 
+            x: this.x, 
+            y: this.y, 
+            angle: this.angle, 
+            scale: this.scale 
+        });
     }
 
     drawBody(ctx, isShadow) {
@@ -166,21 +169,14 @@ class Dragonfly {
 
     drawOneWingPair(ctx, x, y, len, width, angleBase, isShadow) {
         // Left Wing (Top side if facing Right)
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(-angleBase); // Negative rotates Up (Counter-Clockwise) on Canvas? No wait.
-        // Canvas Rotation: Positive is Clockwise (Down).
-        // To point UP (-Y), we need Negative rotation?
-        // Yes. -Math.PI/2 points Up.
-        this.drawWingShape(ctx, len, width, isShadow);
-        ctx.restore();
+        this.withTransform(ctx, () => {
+            this.drawWingShape(ctx, len, width, isShadow);
+        }, { x, y, angle: -angleBase });
 
         // Right Wing (Bottom side if facing Right)
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angleBase); // Positive rotates Down (Clockwise)
-        this.drawWingShape(ctx, len, width, isShadow);
-        ctx.restore();
+        this.withTransform(ctx, () => {
+            this.drawWingShape(ctx, len, width, isShadow);
+        }, { x, y, angle: angleBase });
     }
 
     drawWingShape(ctx, len, width, isShadow) {

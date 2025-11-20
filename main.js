@@ -53,18 +53,35 @@ function init() {
 
     fishes = [];
 
+    // Shadow Fish
     fishes.push(
-        new Fish(width / 2, height / 2, { color: { h: 35, s: 90, l: 50 } })
+        new Fish(Math.random() * width, Math.random() * height, {
+            color: { h: 210, s: 120, l: 4 },
+            sizeScale: 0.6, 
+            pattern: "silhouette",
+        })
     );
 
     fishes.push(
-        new Fish(width / 2 + 50, height / 2 + 50, {
+        new Fish(Math.random() * width, Math.random() * height, {
+            color: { h: 210, s: 120, l: 4 },
+            sizeScale: 0.8,
+            pattern: "silhouette",
+        })
+    );
+
+    fishes.push(
+        new Fish(Math.random() * width, Math.random() * height, { color: { h: 35, s: 90, l: 50 } })
+    );
+
+    fishes.push(
+        new Fish(Math.random() * width, Math.random() * height, {
             color: { h: 200, s: 10, l: 90 },
         })
     );
 
     fishes.push(
-        new Fish(width / 2 - 50, height / 2 + 20, {
+        new Fish(Math.random() * width, Math.random() * height, {
             color: { h: 0, s: 0, l: 95 },
             pattern: "spots",
             patternColor: { h: 25, s: 90, l: 50 },
@@ -72,7 +89,7 @@ function init() {
     );
 
     fishes.push(
-        new Fish(width / 2, height / 2 - 50, {
+        new Fish(Math.random() * width, Math.random() * height, {
             color: { h: 0, s: 0, l: 95 },
             pattern: "tricolor",
             patternColor: { h: 10, s: 90, l: 50 },
@@ -93,6 +110,8 @@ function init() {
         const size = 40 + Math.random() * 40;
         
         const pad = new LilyPad(x, y, size);
+        // Add delay: 0.1s per index
+        pad.popInDelay = i * 0.1;
         lilyPads.push(pad);
 
         // 20% chance to spawn a flower buddy nearby
@@ -105,6 +124,8 @@ function init() {
             
             // Create flower instance
             const flower = new Flower(fx, fy, size * 0.6);
+            // Give flower same delay as parent pad, plus a tiny bit
+            flower.popInDelay = pad.popInDelay + 0.2;
             lilyPads.push(flower);
         }
     }
