@@ -98,7 +98,9 @@ function init() {
     );
 
     fishes.push(
-        new Fish(Math.random() * width, Math.random() * height, { color: { h: 35, s: 90, l: 50 } })
+        new Fish(Math.random() * width, Math.random() * height, { 
+            color: { h: 35, s: 90, l: 50 },
+        })
     );
 
     fishes.push(
@@ -121,6 +123,13 @@ function init() {
             pattern: "tricolor",
             patternColor: { h: 10, s: 90, l: 50 },
             patternColor2: { h: 0, s: 0, l: 15 },
+        })
+    );
+    
+    fishes.push(
+        new Fish(Math.random() * width, Math.random() * height, {
+            color: { h: 35, s: 90, l: 50 },
+            ornament: "eyes"
         })
     );
 

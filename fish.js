@@ -18,6 +18,118 @@ const FISH_CONFIG = {
     }
 };
 
+class Whisker {
+    constructor(length, segmentCount, color) {
+        this.length = length;
+        this.segmentCount = segmentCount;
+        this.color = { ...color }; // Expecting HSL object
+        this.segments = [];
+        this.anchor = { x: 0, y: 0 };
+
+        // Initialize segments
+        for (let i = 0; i < this.segmentCount; i++) {
+            this.segments.push({ x: 0, y: 0 });
+        }
+    }
+
+    setColor(color) {
+        this.color = { ...color };
+    }
+
+    setAnchor(x, y, angle) {
+        this.anchor.x = x;
+        this.anchor.y = y;
+        this.anchor.angle = angle; // Optional: pass angle for stiffness
+    }
+
+    update(dt) {
+        // Rope simulation
+        // Head follows anchor
+        this.segments[0].x = this.anchor.x;
+        this.segments[0].y = this.anchor.y;
+
+        const segmentLength = this.length / this.segmentCount;
+        
+        // Gravity/Float effect (light drift)
+        const driftX = (Math.random() - 0.5) * 5;
+        const driftY = (Math.random() - 0.5) * 5;
+
+        // First few segments have "stiffness" to stick out
+        const stiffnessLength = 5; // First segments stay stiff longer
+
+        for (let i = 1; i < this.segmentCount; i++) {
+            const current = this.segments[i];
+            const prev = this.segments[i - 1];
+
+            // Base Drag/Drift
+            current.x += driftX * dt;
+            current.y += driftY * dt;
+
+            // Add drag from movement (simple damping)
+            // (Implicitly handled by position correction mostly)
+
+            // Stiffness: If early segment, bias towards sticking out
+            if (i < stiffnessLength && this.anchor.angle !== undefined) {
+                // Target angle is the anchor angle (perpendicular to fish head)
+                const targetX = prev.x + Math.cos(this.anchor.angle) * segmentLength;
+                const targetY = prev.y + Math.sin(this.anchor.angle) * segmentLength;
+                
+                // Blend current pos with target pos (Stiffness factor)
+                // Higher factor = stiffer
+                const stiffness = 0.45 * Math.max(0, 1 - i / stiffnessLength);
+                current.x += (targetX - current.x) * stiffness;
+                current.y += (targetY - current.y) * stiffness;
+            }
+
+            // Constraint to previous segment (Distance Constraint)
+            const dx = current.x - prev.x;
+            const dy = current.y - prev.y;
+            const dist = Math.hypot(dx, dy);
+            
+            if (dist > segmentLength) {
+                const scale = segmentLength / dist;
+                current.x = prev.x + dx * scale;
+                current.y = prev.y + dy * scale;
+            }
+            
+            // Add a little lag/smoothing for flow
+            // Lower value = more trail/loose, Higher = more rigid
+            const smoothing = 0.1;
+            current.x += (prev.x - current.x) * smoothing;
+            current.y += (prev.y - current.y) * smoothing;
+        }
+    }
+
+    draw(ctx) {
+        if (this.segments.length < 2) return;
+
+        const { h, s, l } = this.color;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        const widthStart = 2;
+        const widthEnd = 0.2;
+        ctx.strokeStyle = `hsl(${h}, ${s}%, ${l}%)`;
+
+        for (let i = 0; i < this.segments.length - 1; i++) {
+            const curr = this.segments[i];
+            const next = this.segments[i + 1];
+            const afterNext = i + 2 < this.segments.length ? this.segments[i + 2] : next;
+            const xc = (next.x + afterNext.x) / 2;
+            const yc = (next.y + afterNext.y) / 2;
+
+            const t = i / (this.segments.length - 1);
+            const width = widthStart + (widthEnd - widthStart) * t;
+            ctx.lineWidth = width;
+
+            ctx.beginPath();
+            ctx.moveTo(curr.x, curr.y);
+            ctx.quadraticCurveTo(next.x, next.y, xc, yc);
+            ctx.stroke();
+        }
+    }
+}
+
 class Fish extends Item {
     constructor(x, y, options = {}) {
         super(x, y);
@@ -42,6 +154,9 @@ class Fish extends Item {
         this.pattern = config.pattern || null;
         this.patternColor = config.patternColor || null;
         this.patternColor2 = config.patternColor2 || null; // For tricolor
+
+        // Ornament support (e.g. 'eyes', 'whiskers', 'none')
+        this.ornament = config.ornament ?? Fish.randomOrnament();
 
         // Size Scale: Affects width and length
         const sizeScale = config.sizeScale || (0.7 + Math.random() * 0.6); // 0.7x to 1.3x size
@@ -91,10 +206,26 @@ class Fish extends Item {
         // Flee behavior state
         this.fleeing = false;
         this.fleeTimer = 0;
+
+        // Initialize Whiskers if needed
+        if (this.ornament === "whiskers") {
+            const minLen = this.length * 4; // half of 8-length
+            const maxLen = this.length * 10; // slightly bigger than current 8-length
+            const whiskerLen = minLen + Math.random() * (maxLen - minLen);
+            const segmentCount = Math.max(10, Math.min(22, Math.round(whiskerLen / (this.length * 0.4))));
+            this.leftWhisker = new Whisker(whiskerLen, segmentCount, this.color);
+            this.rightWhisker = new Whisker(whiskerLen, segmentCount, this.color);
+        }
+    }
+
+    static randomOrnament() {
+        const r = Math.random();
+        if (r < 0.20) return "eyes";
+        if (r < 0.5) return "whiskers";
+        return "none";
     }
 
     pickNewTarget() {
-        // Pick a random spot on the canvas
         if (typeof width !== 'undefined' && typeof height !== 'undefined') {
             this.target.x = Math.random() * width;
             this.target.y = Math.random() * height;
@@ -184,6 +315,36 @@ class Fish extends Item {
         if (distToTarget < 50) {
             this.pickNewTarget();
         }
+
+        // Update Whiskers
+        if (this.ornament === "whiskers" && this.leftWhisker && this.rightWhisker) {
+            const head = this.segments[0];
+            const perpAngle = head.angle + Math.PI / 2;
+            const headWidth = this.bodyWidth.head;
+            const forwardOffset = headWidth * 0.5;
+            const outwardOffset = headWidth;
+
+            const baseX = head.x + Math.cos(head.angle) * forwardOffset;
+            const baseY = head.y + Math.sin(head.angle) * forwardOffset;
+
+            const lx = baseX + Math.cos(perpAngle) * outwardOffset;
+            const ly = baseY + Math.sin(perpAngle) * outwardOffset;
+
+            const rx = baseX - Math.cos(perpAngle) * outwardOffset;
+            const ry = baseY - Math.sin(perpAngle) * outwardOffset;
+
+            const whiskerAngleBias = 0.35;
+            this.leftWhisker.setAnchor(lx, ly, perpAngle - whiskerAngleBias);
+            this.rightWhisker.setAnchor(rx, ry, perpAngle + Math.PI + whiskerAngleBias);
+
+            const tSecond = this.segments.length > 1 ? 1 / (this.segments.length - 1) : 0;
+            const whiskerColor = this.getSegmentColorAt(tSecond);
+            this.leftWhisker.setColor(whiskerColor);
+            this.rightWhisker.setColor(whiskerColor);
+
+            this.leftWhisker.update(0.016);
+            this.rightWhisker.update(0.016);
+        }
     }
 
     draw(ctx) {
@@ -230,15 +391,43 @@ class Fish extends Item {
             }, { x: tailSeg.x, y: tailSeg.y, angle: tailSeg.angle, scale: tailScale });
         }
 
-        // Draw body layers
+        // Whiskers (draw beneath body so fish overlaps them slightly)
+        if (this.ornament === "whiskers" && this.leftWhisker && this.rightWhisker) {
+            this.leftWhisker.draw(ctx);
+            this.rightWhisker.draw(ctx);
+        }
+
+        // Eyes (draw beneath first segment so body sits on top slightly)
+        if (this.ornament === "eyes" && this.segments[0]) {
+            const head = this.segments[0];
+            const headSize = this.bodyWidth.head; 
+
+            const tEye = this.segments.length > 1 ? 1 / (this.segments.length - 1) : 0;
+            const eyeColor = this.getSegmentColorAt(tEye);
+            const eyeFill = `hsl(${eyeColor.h}, ${eyeColor.s}%, ${eyeColor.l}%)`;
+
+            const eyeOffsetSide = headSize * 1.2; 
+            const eyeOffsetForward = headSize * 0.2;
+            const eyeSize = headSize * 0.55;
+
+            this.withTransform(ctx, () => {
+                ctx.fillStyle = eyeFill;
+                ctx.beginPath();
+                ctx.arc(eyeOffsetForward, -eyeOffsetSide, eyeSize, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = eyeFill;
+                ctx.beginPath();
+                ctx.arc(eyeOffsetForward, eyeOffsetSide, eyeSize, 0, Math.PI * 2);
+                ctx.fill();
+            }, { x: head.x, y: head.y, angle: head.angle });
+        }
+
+        // Draw body layers (Draw body BEFORE eyes so eyes are on top)
         for (let i = this.segments.length - 1; i >= 0; i--) {
             const seg = this.segments[i];
-
-            // Note: 'angle' here needs to include the swim offset if possible, 
-            // but swimOffset was applied AFTER base rotation in original code via a second rotate.
-            // withTransform supports single rotation. We can sum them or nest them.
-            // Original: translate -> rotate(angle) -> rotate(swimOffset)
-            // Which is equivalent to rotate(angle + swimOffset).
+            
+            // ... (segment drawing logic) ...
             
             const swimOffset = Math.sin(Date.now() / 150 + i * 0.5 + this.x * 0.1) * (i * 0.05) * 0.3;
             
@@ -257,42 +446,38 @@ class Fish extends Item {
                     size = w.middle - progress * (w.middle - w.tail);
                 }
 
-                // Pattern logic
-                let segmentColor = this.color;
-                
-                if (this.pattern === 'spots' && this.patternColor) {
-                    // Kohaku pattern logic: Large patches
-                    if ((t > 0.1 && t < 0.35) || (t > 0.55 && t < 0.8)) {
-                        segmentColor = this.patternColor;
-                    }
-                } else if (this.pattern === 'tricolor' && this.patternColor && this.patternColor2) {
-                    // Showa/Sanke pattern logic: Patches of two colors on base
-                    // Base is usually white (this.color)
-                    // PatternColor is Red/Orange
-                    // PatternColor2 is Black
-                    
-                    // Red patches (Head, Mid-body)
-                    if ((t > 0.05 && t < 0.25) || (t > 0.45 && t < 0.65)) {
-                        segmentColor = this.patternColor;
-                    }
-                    // Black patches (Shoulders, Tail) - distinct from red
-                    // Using different ranges to create "sumi" (ink) spots
-                    else if ((t > 0.25 && t < 0.35) || (t > 0.7 && t < 0.85)) {
-                        segmentColor = this.patternColor2;
-                    }
-                }
-
-                let lightness = segmentColor.l + (1 - t) * 10 - t * 10;
-                if (this.pattern === 'silhouette') {
-                    lightness = segmentColor.l; // Solid color, no gradient
-                }
-                
-                ctx.fillStyle = `hsl(${segmentColor.h}, ${segmentColor.s}%, ${lightness}%)`;
+                const segColor = this.getSegmentColorAt(t);
+                ctx.fillStyle = `hsl(${segColor.h}, ${segColor.s}%, ${segColor.l}%)`;
 
                 ctx.beginPath();
                 ctx.ellipse(0, 0, size * 1.2, size, 0, 0, Math.PI * 2);
                 ctx.fill();
             }, { x: seg.x, y: seg.y, angle: seg.angle + swimOffset });
         }
+
+
+    }
+
+    getSegmentColorAt(t) {
+        let segmentColor = this.color;
+
+        if (this.pattern === 'spots' && this.patternColor) {
+            if ((t > 0.1 && t < 0.35) || (t > 0.55 && t < 0.8)) {
+                segmentColor = this.patternColor;
+            }
+        } else if (this.pattern === 'tricolor' && this.patternColor && this.patternColor2) {
+            if ((t > 0.05 && t < 0.25) || (t > 0.45 && t < 0.65)) {
+                segmentColor = this.patternColor;
+            } else if ((t > 0.25 && t < 0.35) || (t > 0.7 && t < 0.85)) {
+                segmentColor = this.patternColor2;
+            }
+        }
+
+        let lightness = segmentColor.l + (1 - t) * 10 - t * 10;
+        if (this.pattern === 'silhouette') {
+            lightness = segmentColor.l;
+        }
+
+        return { h: segmentColor.h, s: segmentColor.s, l: lightness };
     }
 }
