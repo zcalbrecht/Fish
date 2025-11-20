@@ -1,17 +1,12 @@
-class LilyPad extends Item {
+class LilyPad extends SurfaceItem {
     constructor(x, y, size) {
-        super(x, y);
-        this.size = size;
+        super(x, y, size);
         this.angle = Math.random() * Math.PI * 2;
         // Random shade of green
         this.color = `hsl(${100 + Math.random() * 40}, 60%, ${30 + Math.random() * 20}%)`;
 
         // Random notch size (0.2 to 1.5 times the base 0.15 PI)
         this.notchWidth = (0.1 + Math.random() * 1.6) * 0.14;
-
-        // Motion properties (vx, vy inherited from Item)
-        this.isDragging = false;
-        this.momentumFriction = 8;
 
         // Stem properties
         this.stemPhase = Math.random() * Math.PI * 2;
@@ -29,23 +24,6 @@ class LilyPad extends Item {
         this.stem.setAnchor(this.anchorX, this.anchorY);
     }
 
-    containsPoint(x, y) {
-        return Math.hypot(x - this.x, y - this.y) <= this.size;
-    }
-
-
-    beginDrag() {
-        this.isDragging = true;
-        this.vx = 0;
-        this.vy = 0;
-    }
-
-    releaseMomentum(vx, vy) {
-        this.isDragging = false;
-        this.vx = vx;
-        this.vy = vy;
-    }
-
     getNow() {
         return typeof performance !== "undefined" ? performance.now() : Date.now();
     }
@@ -56,16 +34,6 @@ class LilyPad extends Item {
         this.updateTransform(now);
         this.stem.setAnchor(this.anchorX, this.anchorY);
         this.stem.update(dt, now);
-    }
-
-    integrateMomentum(dt) {
-        if (this.isDragging || !dt) return;
-        this.x += this.vx * dt;
-        this.y += this.vy * dt;
-
-        const damping = Math.exp(-this.momentumFriction * dt);
-        this.vx *= damping;
-        this.vy *= damping;
     }
 
     updateTransform(now) {

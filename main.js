@@ -186,12 +186,17 @@ function animate() {
     ctx.fillStyle = "#001123";
     ctx.fillRect(0, 0, width, height);
 
-    // Update lily pads first (needed for stem positions)
+    if (pond) {
+        pond.update(dt);
+        pond.draw(ctx);
+    }
+
+    // Update lily pads (needed for stem positions)
     for (const pad of lilyPads) {
         pad.update(dt, now);
     }
 
-    resolveLilyPadCollisions();
+    SurfaceItem.resolveAll(lilyPads);
 
     // Draw all stems first (bottom layer, before everything else)
     for (const pad of lilyPads) {
@@ -203,18 +208,8 @@ function animate() {
         fish.draw(ctx);
     }
 
-    if (pond) {
-        pond.update();
-        pond.draw(ctx);
-    }
-
-    for (let i = ripples.length - 1; i >= 0; i--) {
-        ripples[i].update(dt);
-        ripples[i].draw(ctx);
-        if (ripples[i].isFinished()) {
-            ripples.splice(i, 1);
-        }
-    }
+    updateEffectList(ripples, dt);
+    drawEffectList(ripples, ctx);
 
     // Draw lily pad and flower bodies (on top of stems and fish)
     for (const pad of lilyPads) {
@@ -227,14 +222,8 @@ function animate() {
         dragonflyTimer = Math.random() * 3600;
     }
 
-    for (let i = dragonflies.length - 1; i >= 0; i--) {
-        const df = dragonflies[i];
-        df.update();
-        df.draw(ctx);
-        if (!df.active) {
-            dragonflies.splice(i, 1);
-        }
-    }
+    updateEffectList(dragonflies, dt);
+    drawEffectList(dragonflies, ctx);
 
     requestAnimationFrame(animate);
 }
@@ -268,42 +257,18 @@ function endPadDrag() {
     draggingPad = null;
 }
 
-function resolveLilyPadCollisions() {
-    for (let i = 0; i < lilyPads.length; i++) {
-        for (let j = i + 1; j < lilyPads.length; j++) {
-            const a = lilyPads[i];
-            const b = lilyPads[j];
-            const dx = b.x - a.x;
-            const dy = b.y - a.y;
-            const dist = Math.hypot(dx, dy) || 0.0001;
-            const minDist = a.size + b.size;
-            if (dist >= minDist) continue;
-
-            const overlap = minDist - dist;
-            const nx = dx / dist;
-            const ny = dy / dist;
-
-            const aFlex = a.isDragging ? 0.2 : 0.5;
-            const bFlex = b.isDragging ? 0.2 : 0.5;
-            const flexSum = aFlex + bFlex;
-
-            const moveA = overlap * (bFlex / flexSum);
-            const moveB = overlap * (aFlex / flexSum);
-
-            a.x -= nx * moveA;
-            a.y -= ny * moveA;
-            b.x += nx * moveB;
-            b.y += ny * moveB;
-
-            const relativeNormalVel =
-                (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
-            if (relativeNormalVel > 0) {
-                const impulse = relativeNormalVel * 0.5;
-                a.vx -= impulse * nx;
-                a.vy -= impulse * ny;
-                b.vx += impulse * nx;
-                b.vy += impulse * ny;
-            }
+function updateEffectList(list, dt) {
+    for (let i = list.length - 1; i >= 0; i--) {
+        const effect = list[i];
+        effect.update(dt);
+        if (!effect.active) {
+            list.splice(i, 1);
         }
+    }
+}
+
+function drawEffectList(list, ctx) {
+    for (const effect of list) {
+        effect.draw(ctx);
     }
 }

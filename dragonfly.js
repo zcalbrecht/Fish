@@ -1,4 +1,4 @@
-class Dragonfly extends Item {
+class Dragonfly extends Effect {
     constructor(canvasWidth, canvasHeight) {
         super(0, 0);
         this.canvasWidth = canvasWidth;
@@ -60,8 +60,10 @@ class Dragonfly extends Item {
         this.wingSpeed = 0.8 + Math.random() * 0.4; // Flapping speed
     }
 
-    update() {
-        this.updatePopIn(0.016);
+    update(dt = 0.016) {
+        // Update pop-in animation
+        this.updatePopIn(dt);
+
         // Move linear
         this.x += this.vx;
         this.y += this.vy;

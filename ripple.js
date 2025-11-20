@@ -1,7 +1,6 @@
-class Ripple {
+class Ripple extends Effect {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
+        super(x, y);
         this.radius = 0;
         this.maxRadius = 80;
         this.alpha = 0.4;
@@ -13,7 +12,15 @@ class Ripple {
         // Time-based animation: speed is in units per second
         // Default dt assumes ~60fps if not provided
         this.radius += this.speed * dt;
+        if ((this.radius - 120) >= this.maxRadius) {
+            this.active = false;
+        }
     }
+
+    isFinished() {
+        return !this.active;
+    }
+
 
     draw(ctx) {
         ctx.save();
@@ -54,6 +61,7 @@ class Ripple {
     }
 
     isFinished() {
-        return (this.radius - 120) >= this.maxRadius;
+        // Deprecated, check .active instead
+        return !this.active;
     }
 }
