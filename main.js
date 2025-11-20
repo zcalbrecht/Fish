@@ -8,6 +8,7 @@ let dragonflies = [];
 let draggingPad = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
+let lastFrameTime = typeof performance !== "undefined" ? performance.now() : Date.now();
 
 function resize() {
     width = canvas.width = window.innerWidth;
@@ -18,7 +19,6 @@ function init() {
     resize();
     window.addEventListener("resize", resize);
 
-    // Click to set target and spawn ripple
     window.addEventListener("mousedown", (e) => {
         if (beginPadDrag(e.clientX, e.clientY)) {
             return;
@@ -52,18 +52,18 @@ function init() {
 
     fishes.push(
         new Fish(width / 2 - 50, height / 2 + 20, {
-            color: { h: 0, s: 0, l: 95 }, // White base
+            color: { h: 0, s: 0, l: 95 },
             pattern: "spots",
-            patternColor: { h: 25, s: 90, l: 50 }, // Orange spots
+            patternColor: { h: 25, s: 90, l: 50 },
         })
     );
 
     fishes.push(
         new Fish(width / 2, height / 2 - 50, {
-            color: { h: 0, s: 0, l: 95 }, // White base
+            color: { h: 0, s: 0, l: 95 },
             pattern: "tricolor",
-            patternColor: { h: 10, s: 90, l: 50 }, // Red/Orange
-            patternColor2: { h: 0, s: 0, l: 15 }, // Black
+            patternColor: { h: 10, s: 90, l: 50 },
+            patternColor2: { h: 0, s: 0, l: 15 },
         })
     );
 
@@ -72,7 +72,6 @@ function init() {
     //     fishes.push(new Fish(Math.random() * width, Math.random() * height));
     // }
 
-    // Create some lily pads
     lilyPads = [];
     const padCount = 7;
     for (let i = 0; i < padCount; i++) {
@@ -83,27 +82,26 @@ function init() {
     }
 
     dragonflies = [];
-    // Initialize timer for next spawn (random between 0s and 60s)
     dragonflyTimer = Math.random() * 3600;
 }
 
 let dragonflyTimer = 0;
 
 function animate() {
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
+    lastFrameTime = now;
+
     ctx.fillStyle = "#001123";
     ctx.fillRect(0, 0, width, height);
 
-    // Draw fish first (under water effect)
     for (const fish of fishes) {
         fish.update();
         fish.draw(ctx);
     }
 
-    // Draw "Pond Effect" (Water depth/vignette)
-    // Overlaps fish, but under lily pads
     drawPondEffect();
 
-    // Draw ripples (above fish and pond effect, below lily pads)
     for (let i = ripples.length - 1; i >= 0; i--) {
         ripples[i].update();
         ripples[i].draw(ctx);
@@ -112,21 +110,17 @@ function animate() {
         }
     }
 
-    // Draw lily pads last (on top of water effect)
     for (const pad of lilyPads) {
+        pad.update(dt, now);
         pad.draw(ctx);
     }
 
-    // Spawn dragonflies randomly
-    // Timer based logic
     dragonflyTimer--;
     if (dragonflyTimer <= 0) {
         dragonflies.push(new Dragonfly(width, height));
-        // Reset timer: 0 to 60 seconds (at 60fps, 0 to 3600 frames)
         dragonflyTimer = Math.random() * 3600;
     }
 
-    // Update and draw dragonflies
     for (let i = dragonflies.length - 1; i >= 0; i--) {
         const df = dragonflies[i];
         df.update();
@@ -149,8 +143,6 @@ class WaterTexture {
     }
 
     init() {
-        // Create drifting polygons (large, faint shapes)
-        // Increased count and decreased size for better texture
         for (let i = 0; i < 40; i++) {
             this.polygons.push({
                 x: Math.random() * this.width,
@@ -168,7 +160,6 @@ class WaterTexture {
             });
         }
 
-        // Create suspended particles (sediment)
         for (let i = 0; i < 50; i++) {
             this.particles.push({
                 x: Math.random() * this.width,
@@ -182,25 +173,21 @@ class WaterTexture {
     }
 
     update() {
-        // Update polygons
         for (const poly of this.polygons) {
             poly.x += poly.vx;
             poly.y += poly.vy;
             poly.angle += poly.rotationSpeed;
 
-            // Wrap around
             if (poly.x < -poly.size) poly.x = this.width + poly.size;
             if (poly.x > this.width + poly.size) poly.x = -poly.size;
             if (poly.y < -poly.size) poly.y = this.height + poly.size;
             if (poly.y > this.height + poly.size) poly.y = -poly.size;
         }
 
-        // Update particles
         for (const p of this.particles) {
             p.x += p.vx;
             p.y += p.vy;
 
-            // Wrap around
             if (p.x < 0) p.x = this.width;
             if (p.x > this.width) p.x = 0;
             if (p.y < 0) p.y = this.height;
@@ -209,13 +196,11 @@ class WaterTexture {
     }
 
     draw(ctx) {
-        // Draw polygons
         for (const poly of this.polygons) {
             ctx.save();
             ctx.translate(poly.x, poly.y);
             ctx.rotate(poly.angle);
 
-            // Use HSLA for color variation
             ctx.fillStyle = `hsla(${poly.hue}, 60%, 20%, ${poly.opacity})`;
 
             ctx.beginPath();
@@ -231,7 +216,6 @@ class WaterTexture {
             ctx.restore();
         }
 
-        // Draw particles
         ctx.fillStyle = "#88aacc"; // Light blue-ish gray for sediment
         for (const p of this.particles) {
             ctx.globalAlpha = p.opacity;
@@ -250,12 +234,9 @@ function drawPondEffect() {
         waterTexture = new WaterTexture(width, height);
     }
 
-    // Update and draw texture
     waterTexture.update();
     waterTexture.draw(ctx);
 
-    // Create a radial gradient for depth/vignette
-    // Center is clearer, edges are darker
     const gradient = ctx.createRadialGradient(
         width / 2,
         height / 2,
@@ -265,10 +246,8 @@ function drawPondEffect() {
         height * 0.8
     );
 
-    // Colors: Dark Blue/Black with transparency
-    // Center: Low opacity (fish visible)
+
     gradient.addColorStop(0, "rgba(0, 6, 20, 0.15)");
-    // Edges: Higher opacity (murky depth)
     gradient.addColorStop(1, "rgba(0, 3, 12, 0.7)");
 
     ctx.fillStyle = gradient;
