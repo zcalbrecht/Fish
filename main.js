@@ -5,6 +5,8 @@ let fishes = [];
 let lilyPads = [];
 let ripples = [];
 let dragonflies = [];
+let pond = null;
+
 let draggingPad = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
@@ -16,9 +18,11 @@ let dragVelocityY = 0;
 function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
+    if (pond) pond.resize(width, height);
 }
 
 function init() {
+    pond = new Pond(window.innerWidth, window.innerHeight);
     resize();
     window.addEventListener("resize", resize);
 
@@ -124,7 +128,10 @@ function animate() {
         fish.draw(ctx);
     }
 
-    drawPondEffect();
+    if (pond) {
+        pond.update();
+        pond.draw(ctx);
+    }
 
     for (let i = ripples.length - 1; i >= 0; i--) {
         ripples[i].update();
@@ -160,127 +167,6 @@ function animate() {
     }
 
     requestAnimationFrame(animate);
-}
-
-class WaterTexture {
-    constructor(width, height) {
-        this.width = width;
-        this.height = height;
-        this.polygons = [];
-        this.particles = [];
-        this.init();
-    }
-
-    init() {
-        for (let i = 0; i < 40; i++) {
-            this.polygons.push({
-                x: Math.random() * this.width,
-                y: Math.random() * this.height,
-                size: 50 + Math.random() * 100, // Smaller: 50-150
-                sides: 3 + Math.floor(Math.random() * 3), // Triangles to Pentagons
-                angle: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 0.002,
-                vx: (Math.random() - 0.5) * 0.2,
-                vy: (Math.random() - 0.5) * 0.2,
-                // Reduced opacity for subtlety: 0.01 to 0.04
-                opacity: 0.01 + Math.random() * 0.03,
-                // Random hue: Green (120) to Cyan (180)
-                hue: 120 + Math.random() * 60,
-            });
-        }
-
-        for (let i = 0; i < 50; i++) {
-            this.particles.push({
-                x: Math.random() * this.width,
-                y: Math.random() * this.height,
-                size: 1 + Math.random() * 2,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5,
-                opacity: 0.1 + Math.random() * 0.2,
-            });
-        }
-    }
-
-    update() {
-        for (const poly of this.polygons) {
-            poly.x += poly.vx;
-            poly.y += poly.vy;
-            poly.angle += poly.rotationSpeed;
-
-            if (poly.x < -poly.size) poly.x = this.width + poly.size;
-            if (poly.x > this.width + poly.size) poly.x = -poly.size;
-            if (poly.y < -poly.size) poly.y = this.height + poly.size;
-            if (poly.y > this.height + poly.size) poly.y = -poly.size;
-        }
-
-        for (const p of this.particles) {
-            p.x += p.vx;
-            p.y += p.vy;
-
-            if (p.x < 0) p.x = this.width;
-            if (p.x > this.width) p.x = 0;
-            if (p.y < 0) p.y = this.height;
-            if (p.y > this.height) p.y = 0;
-        }
-    }
-
-    draw(ctx) {
-        for (const poly of this.polygons) {
-            ctx.save();
-            ctx.translate(poly.x, poly.y);
-            ctx.rotate(poly.angle);
-
-            ctx.fillStyle = `hsla(${poly.hue}, 60%, 20%, ${poly.opacity})`;
-
-            ctx.beginPath();
-            for (let i = 0; i < poly.sides; i++) {
-                const theta = (i / poly.sides) * Math.PI * 2;
-                const px = Math.cos(theta) * poly.size;
-                const py = Math.sin(theta) * poly.size;
-                if (i === 0) ctx.moveTo(px, py);
-                else ctx.lineTo(px, py);
-            }
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-        }
-
-        ctx.fillStyle = "#88aacc"; // Light blue-ish gray for sediment
-        for (const p of this.particles) {
-            ctx.globalAlpha = p.opacity;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.globalAlpha = 1.0; // Reset alpha
-    }
-}
-
-let waterTexture;
-
-function drawPondEffect() {
-    if (!waterTexture) {
-        waterTexture = new WaterTexture(width, height);
-    }
-
-    waterTexture.update();
-    waterTexture.draw(ctx);
-
-    const gradient = ctx.createRadialGradient(
-        width / 2,
-        height / 2,
-        height * 0.2,
-        width / 2,
-        height / 2,
-        height * 0.8
-    );
-
-
-    gradient.addColorStop(0, "rgba(0, 6, 20, 0.15)");
-    gradient.addColorStop(1, "rgba(0, 3, 12, 0.7)");
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
 }
 
 init();
