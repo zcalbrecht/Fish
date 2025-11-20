@@ -26,30 +26,57 @@ function init() {
     resize();
     window.addEventListener("resize", resize);
 
-    window.addEventListener("mousedown", (e) => {
-        if (beginPadDrag(e.clientX, e.clientY)) {
+    // Helper to get coordinates from mouse or touch events
+    const getEventCoords = (e) => {
+        if (e.touches && e.touches.length > 0) {
+            return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.changedTouches && e.changedTouches.length > 0) {
+            return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+        }
+        return { x: e.clientX, y: e.clientY };
+    };
+
+    const handleStart = (e) => {
+        const coords = getEventCoords(e);
+        if (beginPadDrag(coords.x, coords.y)) {
             return;
         }
         for (const fish of fishes) {
-            fish.setTarget(e.clientX, e.clientY);
+            fish.setTarget(coords.x, coords.y);
         }
-        ripples.push(new Ripple(e.clientX, e.clientY));
-    });
-    window.addEventListener("mousemove", (e) => {
+        ripples.push(new Ripple(coords.x, coords.y));
+    };
+
+    const handleMove = (e) => {
         if (!draggingPad) return;
+        e.preventDefault(); // Prevent scrolling on mobile
+        const coords = getEventCoords(e);
         const now = typeof performance !== "undefined" ? performance.now() : Date.now();
         const dt = Math.max((now - lastDragSampleTime) / 1000, 0.001);
         const prevX = draggingPad.x;
         const prevY = draggingPad.y;
-        const nextX = e.clientX + dragOffsetX;
-        const nextY = e.clientY + dragOffsetY;
+        const nextX = coords.x + dragOffsetX;
+        const nextY = coords.y + dragOffsetY;
         draggingPad.setPosition(nextX, nextY);
         dragVelocityX = (draggingPad.x - prevX) / dt;
         dragVelocityY = (draggingPad.y - prevY) / dt;
         lastDragSampleTime = now;
-    });
+    };
+
+    // Mouse events
+    window.addEventListener("mousedown", handleStart);
+    window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseup", endPadDrag);
     window.addEventListener("mouseleave", endPadDrag);
+
+    // Touch events
+    window.addEventListener("touchstart", (e) => {
+        e.preventDefault(); // Prevent default touch behavior
+        handleStart(e);
+    }, { passive: false });
+    window.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("touchend", endPadDrag);
+    window.addEventListener("touchcancel", endPadDrag);
 
     fishes = [];
 
