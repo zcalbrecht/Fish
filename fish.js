@@ -11,11 +11,11 @@ const FISH_CONFIG = {
     segmentCount: 10,
     segmentLength: 12,
     bodyWidth: {
-        head: 15,   // Width at the head
+        head: 15, // Width at the head
         middle: 25, // Max width
-        tail: 5,    // Width at the tail
-        taperPoint: 0.15 // Position of max width (0.0 = head, 1.0 = tail)
-    }
+        tail: 5, // Width at the tail
+        taperPoint: 0.15, // Position of max width (0.0 = head, 1.0 = tail)
+    },
 };
 
 class Whisker {
@@ -49,7 +49,7 @@ class Whisker {
         this.segments[0].y = this.anchor.y;
 
         const segmentLength = this.length / this.segmentCount;
-        
+
         // Gravity/Float effect (light drift)
         const driftX = (Math.random() - 0.5) * 5;
         const driftY = (Math.random() - 0.5) * 5;
@@ -71,9 +71,11 @@ class Whisker {
             // Stiffness: If early segment, bias towards sticking out
             if (i < stiffnessLength && this.anchor.angle !== undefined) {
                 // Target angle is the anchor angle (perpendicular to fish head)
-                const targetX = prev.x + Math.cos(this.anchor.angle) * segmentLength;
-                const targetY = prev.y + Math.sin(this.anchor.angle) * segmentLength;
-                
+                const targetX =
+                    prev.x + Math.cos(this.anchor.angle) * segmentLength;
+                const targetY =
+                    prev.y + Math.sin(this.anchor.angle) * segmentLength;
+
                 // Blend current pos with target pos (Stiffness factor)
                 // Higher factor = stiffer
                 const stiffness = 0.45 * Math.max(0, 1 - i / stiffnessLength);
@@ -85,13 +87,13 @@ class Whisker {
             const dx = current.x - prev.x;
             const dy = current.y - prev.y;
             const dist = Math.hypot(dx, dy);
-            
+
             if (dist > segmentLength) {
                 const scale = segmentLength / dist;
                 current.x = prev.x + dx * scale;
                 current.y = prev.y + dy * scale;
             }
-            
+
             // Add a little lag/smoothing for flow
             // Lower value = more trail/loose, Higher = more rigid
             const smoothing = 0.1;
@@ -114,7 +116,8 @@ class Whisker {
         for (let i = 0; i < this.segments.length - 1; i++) {
             const curr = this.segments[i];
             const next = this.segments[i + 1];
-            const afterNext = i + 2 < this.segments.length ? this.segments[i + 2] : next;
+            const afterNext =
+                i + 2 < this.segments.length ? this.segments[i + 2] : next;
             const xc = (next.x + afterNext.x) / 2;
             const yc = (next.y + afterNext.y) / 2;
 
@@ -147,8 +150,16 @@ class Fish extends Item {
         this.color = config.color || {
             h: Math.random() * 360,
             s: 60 + Math.random() * 40, // 60-100% saturation
-            l: 40 + Math.random() * 30  // 40-70% lightness
+            l: 40 + Math.random() * 30, // 40-70% lightness
         };
+
+        if (this.pattern === "silhouette" && !config.color) {
+            this.color = {
+                h: 210,
+                s: 75,
+                l: 6,
+            };
+        }
 
         // Pattern support (e.g. 'spots', 'tricolor')
         this.pattern = config.pattern || null;
@@ -159,10 +170,11 @@ class Fish extends Item {
         this.ornament = config.ornament ?? Fish.randomOrnament();
 
         // Size Scale: Affects width and length
-        const sizeScale = config.sizeScale || (0.7 + Math.random() * 0.6); // 0.7x to 1.3x size
+        const sizeScale = config.sizeScale || 0.7 + Math.random() * 0.6; // 0.7x to 1.3x size
 
         // Segments: Number of body segments (affects length/flexibility)
-        this.segmentCount = config.segmentCount || Math.floor(6 + Math.random() * 8); // 6 to 14 segments
+        this.segmentCount =
+            config.segmentCount || Math.floor(6 + Math.random() * 8); // 6 to 14 segments
 
         // Segment Length: Distance between segments
         const baseLength = config.segmentLength || FISH_CONFIG.segmentLength;
@@ -174,11 +186,11 @@ class Fish extends Item {
             head: (config.headWidth || baseWidth.head) * sizeScale,
             middle: (config.middleWidth || baseWidth.middle) * sizeScale,
             tail: (config.tailWidth || baseWidth.tail) * sizeScale,
-            taperPoint: config.taperPoint || baseWidth.taperPoint
+            taperPoint: config.taperPoint || baseWidth.taperPoint,
         };
 
         // Speed Modifier
-        const speedMod = config.speedMod || (0.8 + Math.random() * 0.4); // 0.8x to 1.2x speed
+        const speedMod = config.speedMod || 0.8 + Math.random() * 0.4; // 0.8x to 1.2x speed
         this.speed = FISH_CONFIG.speed * speedMod;
         this.turnSpeed = FISH_CONFIG.turnSpeed * speedMod;
 
@@ -190,7 +202,7 @@ class Fish extends Item {
         // Autonomous target
         this.target = {
             x: x,
-            y: y
+            y: y,
         };
         this.pickNewTarget();
 
@@ -199,7 +211,7 @@ class Fish extends Item {
             this.segments.push({
                 x: x - Math.cos(this.angle) * this.length * i,
                 y: y - Math.sin(this.angle) * this.length * i,
-                angle: this.angle
+                angle: this.angle,
             });
         }
 
@@ -212,21 +224,32 @@ class Fish extends Item {
             const minLen = this.length * 4; // half of 8-length
             const maxLen = this.length * 10; // slightly bigger than current 8-length
             const whiskerLen = minLen + Math.random() * (maxLen - minLen);
-            const segmentCount = Math.max(10, Math.min(22, Math.round(whiskerLen / (this.length * 0.4))));
-            this.leftWhisker = new Whisker(whiskerLen, segmentCount, this.color);
-            this.rightWhisker = new Whisker(whiskerLen, segmentCount, this.color);
+            const segmentCount = Math.max(
+                10,
+                Math.min(22, Math.round(whiskerLen / (this.length * 0.4)))
+            );
+            this.leftWhisker = new Whisker(
+                whiskerLen,
+                segmentCount,
+                this.color
+            );
+            this.rightWhisker = new Whisker(
+                whiskerLen,
+                segmentCount,
+                this.color
+            );
         }
     }
 
     static randomOrnament() {
         const r = Math.random();
-        if (r < 0.20) return "eyes";
+        if (r < 0.2) return "eyes";
         if (r < 0.5) return "whiskers";
         return "none";
     }
 
     pickNewTarget() {
-        if (typeof width !== 'undefined' && typeof height !== 'undefined') {
+        if (typeof width !== "undefined" && typeof height !== "undefined") {
             this.target.x = Math.random() * width;
             this.target.y = Math.random() * height;
         }
@@ -317,7 +340,11 @@ class Fish extends Item {
         }
 
         // Update Whiskers
-        if (this.ornament === "whiskers" && this.leftWhisker && this.rightWhisker) {
+        if (
+            this.ornament === "whiskers" &&
+            this.leftWhisker &&
+            this.rightWhisker
+        ) {
             const head = this.segments[0];
             const perpAngle = head.angle + Math.PI / 2;
             const headWidth = this.bodyWidth.head;
@@ -335,9 +362,14 @@ class Fish extends Item {
 
             const whiskerAngleBias = 0.35;
             this.leftWhisker.setAnchor(lx, ly, perpAngle - whiskerAngleBias);
-            this.rightWhisker.setAnchor(rx, ry, perpAngle + Math.PI + whiskerAngleBias);
+            this.rightWhisker.setAnchor(
+                rx,
+                ry,
+                perpAngle + Math.PI + whiskerAngleBias
+            );
 
-            const tSecond = this.segments.length > 1 ? 1 / (this.segments.length - 1) : 0;
+            const tSecond =
+                this.segments.length > 1 ? 1 / (this.segments.length - 1) : 0;
             const whiskerColor = this.getSegmentColorAt(tSecond);
             this.leftWhisker.setColor(whiskerColor);
             this.rightWhisker.setColor(whiskerColor);
@@ -348,51 +380,82 @@ class Fish extends Item {
     }
 
     draw(ctx) {
+        const isSilhouette = this.pattern === "silhouette";
+
+        if (isSilhouette) {
+            ctx.save();
+            ctx.filter = "blur(3px)";
+        }
+
         // Pectoral fins
         const pectoralSegIndex = Math.floor(this.segments.length * 0.3);
         const pectoralSeg = this.segments[pectoralSegIndex];
         if (pectoralSeg) {
             // Scale fins with body width
-            const finScale = this.bodyWidth.middle / FISH_CONFIG.bodyWidth.middle; 
+            const finScale =
+                this.bodyWidth.middle / FISH_CONFIG.bodyWidth.middle;
 
-            this.withTransform(ctx, () => {
-                ctx.fillStyle = `hsl(${this.color.h}, ${this.color.s}%, ${this.color.l}%)`;
+            this.withTransform(
+                ctx,
+                () => {
+                    ctx.fillStyle = `hsl(${this.color.h}, ${this.color.s}%, ${this.color.l}%)`;
 
-                // Left fin
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.quadraticCurveTo(-10, 20, -20, 25);
-                ctx.quadraticCurveTo(-10, 10, 0, 5);
-                ctx.fill();
+                    // Left fin
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(-10, 20, -20, 25);
+                    ctx.quadraticCurveTo(-10, 10, 0, 5);
+                    ctx.fill();
 
-                // Right fin
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.quadraticCurveTo(-10, -20, -20, -25);
-                ctx.quadraticCurveTo(-10, -10, 0, -5);
-                ctx.fill();
-            }, { x: pectoralSeg.x, y: pectoralSeg.y, angle: pectoralSeg.angle, scale: finScale });
+                    // Right fin
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(-10, -20, -20, -25);
+                    ctx.quadraticCurveTo(-10, -10, 0, -5);
+                    ctx.fill();
+                },
+                {
+                    x: pectoralSeg.x,
+                    y: pectoralSeg.y,
+                    angle: pectoralSeg.angle,
+                    scale: finScale,
+                }
+            );
         }
 
         // Tail fin
         const tailSeg = this.segments[this.segments.length - 1];
         if (tailSeg) {
-            const tailScale = this.bodyWidth.middle / FISH_CONFIG.bodyWidth.middle;
+            const tailScale =
+                this.bodyWidth.middle / FISH_CONFIG.bodyWidth.middle;
 
-            this.withTransform(ctx, () => {
-                ctx.fillStyle = `hsl(${this.color.h}, ${this.color.s}%, ${this.color.l}%)`;
-                
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.quadraticCurveTo(-30, 15, -40, 30);
-                ctx.quadraticCurveTo(-30, 0, -40, -30);
-                ctx.quadraticCurveTo(-30, -15, 0, 0);
-                ctx.fill();
-            }, { x: tailSeg.x, y: tailSeg.y, angle: tailSeg.angle, scale: tailScale });
+            this.withTransform(
+                ctx,
+                () => {
+                    ctx.fillStyle = `hsl(${this.color.h}, ${this.color.s}%, ${this.color.l}%)`;
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(-30, 15, -40, 30);
+                    ctx.quadraticCurveTo(-30, 0, -40, -30);
+                    ctx.quadraticCurveTo(-30, -15, 0, 0);
+                    ctx.fill();
+                },
+                {
+                    x: tailSeg.x,
+                    y: tailSeg.y,
+                    angle: tailSeg.angle,
+                    scale: tailScale,
+                }
+            );
         }
 
         // Whiskers (draw beneath body so fish overlaps them slightly)
-        if (this.ornament === "whiskers" && this.leftWhisker && this.rightWhisker) {
+        if (
+            this.ornament === "whiskers" &&
+            this.leftWhisker &&
+            this.rightWhisker
+        ) {
             this.leftWhisker.draw(ctx);
             this.rightWhisker.draw(ctx);
         }
@@ -400,72 +463,103 @@ class Fish extends Item {
         // Eyes (draw beneath first segment so body sits on top slightly)
         if (this.ornament === "eyes" && this.segments[0]) {
             const head = this.segments[0];
-            const headSize = this.bodyWidth.head; 
+            const headSize = this.bodyWidth.head;
 
-            const tEye = this.segments.length > 1 ? 1 / (this.segments.length - 1) : 0;
+            const tEye =
+                this.segments.length > 1 ? 1 / (this.segments.length - 1) : 0;
             const eyeColor = this.getSegmentColorAt(tEye);
             const eyeFill = `hsl(${eyeColor.h}, ${eyeColor.s}%, ${eyeColor.l}%)`;
 
-            const eyeOffsetSide = headSize * 1.2; 
+            const eyeOffsetSide = headSize * 1.2;
             const eyeOffsetForward = headSize * 0.2;
             const eyeSize = headSize * 0.55;
 
-            this.withTransform(ctx, () => {
-                ctx.fillStyle = eyeFill;
-                ctx.beginPath();
-                ctx.arc(eyeOffsetForward, -eyeOffsetSide, eyeSize, 0, Math.PI * 2);
-                ctx.fill();
+            this.withTransform(
+                ctx,
+                () => {
+                    ctx.fillStyle = eyeFill;
+                    ctx.beginPath();
+                    ctx.arc(
+                        eyeOffsetForward,
+                        -eyeOffsetSide,
+                        eyeSize,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
 
-                ctx.fillStyle = eyeFill;
-                ctx.beginPath();
-                ctx.arc(eyeOffsetForward, eyeOffsetSide, eyeSize, 0, Math.PI * 2);
-                ctx.fill();
-            }, { x: head.x, y: head.y, angle: head.angle });
+                    ctx.fillStyle = eyeFill;
+                    ctx.beginPath();
+                    ctx.arc(
+                        eyeOffsetForward,
+                        eyeOffsetSide,
+                        eyeSize,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                },
+                { x: head.x, y: head.y, angle: head.angle }
+            );
         }
 
         // Draw body layers (Draw body BEFORE eyes so eyes are on top)
         for (let i = this.segments.length - 1; i >= 0; i--) {
             const seg = this.segments[i];
-            
+
             // ... (segment drawing logic) ...
-            
-            const swimOffset = Math.sin(Date.now() / 150 + i * 0.5 + this.x * 0.1) * (i * 0.05) * 0.3;
-            
-            this.withTransform(ctx, () => {
-                const t = i / (this.segments.length - 1);
 
-                let size;
-                // Use instance bodyWidth
-                const w = this.bodyWidth;
+            const swimOffset =
+                Math.sin(Date.now() / 150 + i * 0.5 + this.x * 0.1) *
+                (i * 0.05) *
+                0.3;
 
-                if (t < w.taperPoint) {
-                    const progress = t / w.taperPoint;
-                    size = w.head + progress * (w.middle - w.head);
-                } else {
-                    const progress = (t - w.taperPoint) / (1 - w.taperPoint);
-                    size = w.middle - progress * (w.middle - w.tail);
-                }
+            this.withTransform(
+                ctx,
+                () => {
+                    const t = i / (this.segments.length - 1);
 
-                const segColor = this.getSegmentColorAt(t);
-                ctx.fillStyle = `hsl(${segColor.h}, ${segColor.s}%, ${segColor.l}%)`;
+                    let size;
+                    // Use instance bodyWidth
+                    const w = this.bodyWidth;
 
-                ctx.beginPath();
-                ctx.ellipse(0, 0, size * 1.2, size, 0, 0, Math.PI * 2);
-                ctx.fill();
-            }, { x: seg.x, y: seg.y, angle: seg.angle + swimOffset });
+                    if (t < w.taperPoint) {
+                        const progress = t / w.taperPoint;
+                        size = w.head + progress * (w.middle - w.head);
+                    } else {
+                        const progress =
+                            (t - w.taperPoint) / (1 - w.taperPoint);
+                        size = w.middle - progress * (w.middle - w.tail);
+                    }
+
+                    const segColor = this.getSegmentColorAt(t);
+                    ctx.fillStyle = `hsl(${segColor.h}, ${segColor.s}%, ${segColor.l}%)`;
+
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, size * 1.2, size, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                },
+                { x: seg.x, y: seg.y, angle: seg.angle + swimOffset }
+            );
         }
 
-
+        if (isSilhouette) {
+            ctx.restore();
+        }
     }
 
     getSegmentColorAt(t) {
         let segmentColor = this.color;
 
-        if (this.pattern === 'spots' && this.patternColor) {
+        if (this.pattern === "spots" && this.patternColor) {
             if ((t > 0.1 && t < 0.35) || (t > 0.55 && t < 0.8)) {
                 segmentColor = this.patternColor;
             }
-        } else if (this.pattern === 'tricolor' && this.patternColor && this.patternColor2) {
+        } else if (
+            this.pattern === "tricolor" &&
+            this.patternColor &&
+            this.patternColor2
+        ) {
             if ((t > 0.05 && t < 0.25) || (t > 0.45 && t < 0.65)) {
                 segmentColor = this.patternColor;
             } else if ((t > 0.25 && t < 0.35) || (t > 0.7 && t < 0.85)) {
@@ -474,7 +568,7 @@ class Fish extends Item {
         }
 
         let lightness = segmentColor.l + (1 - t) * 10 - t * 10;
-        if (this.pattern === 'silhouette') {
+        if (this.pattern === "silhouette") {
             lightness = segmentColor.l;
         }
 
