@@ -22,19 +22,9 @@ class Flower extends LilyPad {
         
         // Center the visual flower on the "pad" body
         this.flowerOffset = { x: 0, y: 0 };
-
-        // Flowers float freely without a long stem rope
-        // We disable the stem visual or give it a tiny anchor-only stem
-        this.stem = {
-            update: () => {},
-            draw: () => {},
-            setAnchor: () => {}
-        };
     }
 
     draw(ctx) {
-        // Skip stem drawing
-        
         this.withTransform(ctx, () => {
             // Skip drawing the green pad base, just draw the flower
             // But we need hit detection... actually the prompt implies

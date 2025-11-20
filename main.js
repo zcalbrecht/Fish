@@ -130,7 +130,7 @@ function init() {
     // }
 
     lilyPads = [];
-    const padCount = 7;
+    const padCount = 5;
     for (let i = 0; i < padCount; i++) {
         const x = Math.random() * width;
         const y = Math.random() * height;
@@ -155,6 +155,21 @@ function init() {
             flower.popInDelay = pad.popInDelay + 0.2;
             lilyPads.push(flower);
         }
+
+        // 20% chance to spawn a smaller lily pad nearby
+        else if (Math.random() < 0.4) {
+            // Pick a spot next to the pad (size + margin)
+            const angle = Math.random() * Math.PI * 2;
+            const dist = size + 15 + Math.random() * 20;
+            const sx = x + Math.cos(angle) * dist;
+            const sy = y + Math.sin(angle) * dist;
+            
+            // Create smaller lily pad instance
+            const smallPad = new LilyPad(sx, sy, size * 0.6);
+            // Give small pad same delay as parent pad, plus a tiny bit
+            smallPad.popInDelay = pad.popInDelay + 0.2;
+            lilyPads.push(smallPad);
+        }
     }
 
     dragonflies = [];
@@ -170,6 +185,18 @@ function animate() {
 
     ctx.fillStyle = "#001123";
     ctx.fillRect(0, 0, width, height);
+
+    // Update lily pads first (needed for stem positions)
+    for (const pad of lilyPads) {
+        pad.update(dt, now);
+    }
+
+    resolveLilyPadCollisions();
+
+    // Draw all stems first (bottom layer, before everything else)
+    for (const pad of lilyPads) {
+        pad.drawStem(ctx);
+    }
 
     for (const fish of fishes) {
         fish.update();
@@ -189,12 +216,7 @@ function animate() {
         }
     }
 
-    for (const pad of lilyPads) {
-        pad.update(dt, now);
-    }
-
-    resolveLilyPadCollisions();
-
+    // Draw lily pad and flower bodies (on top of stems and fish)
     for (const pad of lilyPads) {
         pad.draw(ctx);
     }

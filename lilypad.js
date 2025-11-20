@@ -82,7 +82,7 @@ class LilyPad extends Item {
         this.anchorY = this.y + this.wobbleY;
     }
 
-    draw(ctx) {
+    drawStem(ctx) {
         ctx.save();
         // Scale the stem around the anchor point
         // We translate to anchor, scale, then translate back? 
@@ -93,7 +93,9 @@ class LilyPad extends Item {
         ctx.translate(-this.anchorX, -this.anchorY);
         this.stem.draw(ctx);
         ctx.restore();
+    }
 
+    draw(ctx) {
         this.withTransform(ctx, () => {
             ctx.fillStyle = this.color;
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
