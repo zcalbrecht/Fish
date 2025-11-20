@@ -1,5 +1,5 @@
 const FISH_CONFIG = {
-    speed: 1.5,
+    speed: 1.2,
     turnSpeed: 0.03,
     turnSpeedClose: 0.01,
     closeDistance: 100,

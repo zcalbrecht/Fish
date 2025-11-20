@@ -10,7 +10,8 @@ let pond = null;
 let draggingPad = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
-let lastFrameTime = typeof performance !== "undefined" ? performance.now() : Date.now();
+let lastFrameTime =
+    typeof performance !== "undefined" ? performance.now() : Date.now();
 let lastDragSampleTime = 0;
 let dragVelocityX = 0;
 let dragVelocityY = 0;
@@ -31,7 +32,10 @@ function init() {
         if (e.touches && e.touches.length > 0) {
             return { x: e.touches[0].clientX, y: e.touches[0].clientY };
         } else if (e.changedTouches && e.changedTouches.length > 0) {
-            return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            return {
+                x: e.changedTouches[0].clientX,
+                y: e.changedTouches[0].clientY,
+            };
         }
         return { x: e.clientX, y: e.clientY };
     };
@@ -51,7 +55,8 @@ function init() {
         if (!draggingPad) return;
         e.preventDefault(); // Prevent scrolling on mobile
         const coords = getEventCoords(e);
-        const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+        const now =
+            typeof performance !== "undefined" ? performance.now() : Date.now();
         const dt = Math.max((now - lastDragSampleTime) / 1000, 0.001);
         const prevX = draggingPad.x;
         const prevY = draggingPad.y;
@@ -70,10 +75,14 @@ function init() {
     window.addEventListener("mouseleave", endPadDrag);
 
     // Touch events
-    window.addEventListener("touchstart", (e) => {
-        e.preventDefault(); // Prevent default touch behavior
-        handleStart(e);
-    }, { passive: false });
+    window.addEventListener(
+        "touchstart",
+        (e) => {
+            e.preventDefault(); // Prevent default touch behavior
+            handleStart(e);
+        },
+        { passive: false }
+    );
     window.addEventListener("touchmove", handleMove, { passive: false });
     window.addEventListener("touchend", endPadDrag);
     window.addEventListener("touchcancel", endPadDrag);
@@ -84,7 +93,7 @@ function init() {
     fishes.push(
         new Fish(Math.random() * width, Math.random() * height, {
             color: { h: 210, s: 120, l: 4 },
-            sizeScale: 0.6, 
+            sizeScale: 0.6,
             pattern: "silhouette",
         })
     );
@@ -98,7 +107,7 @@ function init() {
     );
 
     fishes.push(
-        new Fish(Math.random() * width, Math.random() * height, { 
+        new Fish(Math.random() * width, Math.random() * height, {
             color: { h: 35, s: 90, l: 50 },
         })
     );
@@ -125,18 +134,11 @@ function init() {
             patternColor2: { h: 0, s: 0, l: 15 },
         })
     );
-    
-    fishes.push(
-        new Fish(Math.random() * width, Math.random() * height, {
-            color: { h: 35, s: 90, l: 50 },
-            ornament: "eyes"
-        })
-    );
 
-    //Spawn Random Fish(leave commented out for now)
-    // for (let i = 0; i < 10; i++) {
-    //     fishes.push(new Fish(Math.random() * width, Math.random() * height));
-    // }
+    // // Spawn Random Fish(leave commented out for now)
+    //  for (let i = 0; i < 10; i++) {
+    //      fishes.push(new Fish(Math.random() * width, Math.random() * height));
+    //  }
 
     lilyPads = [];
     const padCount = 5;
@@ -144,7 +146,7 @@ function init() {
         const x = Math.random() * width;
         const y = Math.random() * height;
         const size = 40 + Math.random() * 40;
-        
+
         const pad = new LilyPad(x, y, size);
         // Add delay: 0.1s per index
         pad.popInDelay = i * 0.1;
@@ -157,7 +159,7 @@ function init() {
             const dist = size + 15 + Math.random() * 20;
             const fx = x + Math.cos(angle) * dist;
             const fy = y + Math.sin(angle) * dist;
-            
+
             // Create flower instance
             const flower = new Flower(fx, fy, size * 0.6);
             // Give flower same delay as parent pad, plus a tiny bit
@@ -172,7 +174,7 @@ function init() {
             const dist = size + 15 + Math.random() * 20;
             const sx = x + Math.cos(angle) * dist;
             const sy = y + Math.sin(angle) * dist;
-            
+
             // Create smaller lily pad instance
             const smallPad = new LilyPad(sx, sy, size * 0.6);
             // Give small pad same delay as parent pad, plus a tiny bit
@@ -188,7 +190,8 @@ function init() {
 let dragonflyTimer = 0;
 
 function animate() {
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const now =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
     const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
     lastFrameTime = now;
 
@@ -251,7 +254,9 @@ function beginPadDrag(x, y) {
             dragVelocityX = 0;
             dragVelocityY = 0;
             lastDragSampleTime =
-                typeof performance !== "undefined" ? performance.now() : Date.now();
+                typeof performance !== "undefined"
+                    ? performance.now()
+                    : Date.now();
             lilyPads.splice(i, 1);
             lilyPads.push(pad);
             return true;
