@@ -105,6 +105,15 @@ class LilyPad {
         }
     }
 
+    containsPoint(x, y) {
+        return Math.hypot(x - this.x, y - this.y) <= this.size;
+    }
+
+    setPosition(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
     draw(ctx) {
         ctx.save();
         ctx.translate(this.x, this.y);
