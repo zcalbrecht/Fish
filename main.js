@@ -200,7 +200,7 @@ function animate() {
 
     if (pond) {
         pond.update(dt);
-        pond.draw(ctx);
+        pond.drawBackground(ctx);
     }
 
     // Update lily pads (needed for stem positions)
@@ -218,6 +218,10 @@ function animate() {
     for (const fish of fishes) {
         fish.update();
         fish.draw(ctx);
+    }
+
+    if (pond) {
+        pond.drawOverlay(ctx);
     }
 
     updateEffectList(ripples, dt);
