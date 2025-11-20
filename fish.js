@@ -185,7 +185,7 @@ class Fish extends Item {
         // --- Initialization ---
 
         this.segments = [];
-        this.angle = 0;
+        this.angle = Math.random() * Math.PI * 2;
 
         // Autonomous target
         this.target = {
@@ -197,9 +197,9 @@ class Fish extends Item {
         // Initialize segments
         for (let i = 0; i < this.segmentCount; i++) {
             this.segments.push({
-                x: x - i * this.length,
-                y: y,
-                angle: 0
+                x: x - Math.cos(this.angle) * this.length * i,
+                y: y - Math.sin(this.angle) * this.length * i,
+                angle: this.angle
             });
         }
 
