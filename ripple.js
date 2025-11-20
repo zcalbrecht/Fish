@@ -4,7 +4,7 @@ class Ripple extends Effect {
         this.radius = 0;
         this.maxRadius = 80;
         this.alpha = 0.4;
-        this.speed = 30; // Units per second (was 0.5 per frame at 60fps = 30/sec)
+        this.speed = 80; // Units per second (faster expansion for snappier feel)
         this.lineWidth = 6;
     }
 
