@@ -2,12 +2,13 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 let fishes = [];
-let lilyPads = [];
+let surfaceItems = [];
 let ripples = [];
 let dragonflies = [];
 let pond = null;
+let raft = null;
 
-let draggingPad = null;
+let draggingItem = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 let lastFrameTime =
@@ -20,6 +21,16 @@ function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
     if (pond) pond.resize(width, height);
+    positionRaft();
+}
+
+function positionRaft() {
+    if (!raft) return;
+    const marginX = raft.width * 0.5 + 40;
+    const marginY = raft.height * 0.5 + 60;
+    const targetX = Math.max(marginX, width - marginX);
+    const targetY = Math.max(marginY, height - marginY);
+    raft.setPosition(targetX, targetY);
 }
 
 function init() {
@@ -42,7 +53,7 @@ function init() {
 
     const handleStart = (e) => {
         const coords = getEventCoords(e);
-        if (beginPadDrag(coords.x, coords.y)) {
+        if (beginSurfaceItemDrag(coords.x, coords.y)) {
             return;
         }
         for (const fish of fishes) {
@@ -52,27 +63,27 @@ function init() {
     };
 
     const handleMove = (e) => {
-        if (!draggingPad) return;
+        if (!draggingItem) return;
         e.preventDefault(); // Prevent scrolling on mobile
         const coords = getEventCoords(e);
         const now =
             typeof performance !== "undefined" ? performance.now() : Date.now();
         const dt = Math.max((now - lastDragSampleTime) / 1000, 0.001);
-        const prevX = draggingPad.x;
-        const prevY = draggingPad.y;
+        const prevX = draggingItem.x;
+        const prevY = draggingItem.y;
         const nextX = coords.x + dragOffsetX;
         const nextY = coords.y + dragOffsetY;
-        draggingPad.setPosition(nextX, nextY);
-        dragVelocityX = (draggingPad.x - prevX) / dt;
-        dragVelocityY = (draggingPad.y - prevY) / dt;
+        draggingItem.setPosition(nextX, nextY);
+        dragVelocityX = (draggingItem.x - prevX) / dt;
+        dragVelocityY = (draggingItem.y - prevY) / dt;
         lastDragSampleTime = now;
     };
 
     // Mouse events
     window.addEventListener("mousedown", handleStart);
     window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", endPadDrag);
-    window.addEventListener("mouseleave", endPadDrag);
+    window.addEventListener("mouseup", endSurfaceItemDrag);
+    window.addEventListener("mouseleave", endSurfaceItemDrag);
 
     // Touch events
     window.addEventListener(
@@ -84,8 +95,8 @@ function init() {
         { passive: false }
     );
     window.addEventListener("touchmove", handleMove, { passive: false });
-    window.addEventListener("touchend", endPadDrag);
-    window.addEventListener("touchcancel", endPadDrag);
+    window.addEventListener("touchend", endSurfaceItemDrag);
+    window.addEventListener("touchcancel", endSurfaceItemDrag);
 
     fishes = [];
 
@@ -140,7 +151,7 @@ function init() {
     //      fishes.push(new Fish(Math.random() * width, Math.random() * height));
     //  }
 
-    lilyPads = [];
+    surfaceItems = [];
     const padCount = 5;
     for (let i = 0; i < padCount; i++) {
         const x = Math.random() * width;
@@ -150,7 +161,7 @@ function init() {
         const pad = new LilyPad(x, y, size);
         // Add delay: 0.1s per index
         pad.popInDelay = i * 0.1;
-        lilyPads.push(pad);
+        surfaceItems.push(pad);
 
         // 20% chance to spawn a flower buddy nearby
         if (Math.random() < 0.2) {
@@ -164,7 +175,7 @@ function init() {
             const flower = new Flower(fx, fy, size * 0.6);
             // Give flower same delay as parent pad, plus a tiny bit
             flower.popInDelay = pad.popInDelay + 0.2;
-            lilyPads.push(flower);
+            surfaceItems.push(flower);
         }
 
         // 20% chance to spawn a smaller lily pad nearby
@@ -179,9 +190,15 @@ function init() {
             const smallPad = new LilyPad(sx, sy, size * 0.6);
             // Give small pad same delay as parent pad, plus a tiny bit
             smallPad.popInDelay = pad.popInDelay + 0.2;
-            lilyPads.push(smallPad);
+            surfaceItems.push(smallPad);
         }
     }
+
+    const raftSize = 75;
+    raft = new Raft(0, 0, raftSize);
+    raft.popInDelay = padCount * 0.1 + 0.3;
+    surfaceItems.push(raft);
+    positionRaft();
 
     dragonflies = [];
     dragonflyTimer = Math.random() * 3600;
@@ -203,16 +220,20 @@ function animate() {
         pond.drawBackground(ctx);
     }
 
-    // Update lily pads (needed for stem positions)
-    for (const pad of lilyPads) {
-        pad.update(dt, now);
+    // Update surface items (needed for transforms/stems)
+    for (const item of surfaceItems) {
+        if (typeof item.update === "function") {
+            item.update(dt, now);
+        }
     }
 
-    SurfaceItem.resolveAll(lilyPads);
+    SurfaceItem.resolveAll(surfaceItems);
 
     // Draw all stems first (bottom layer, before everything else)
-    for (const pad of lilyPads) {
-        pad.drawStem(ctx);
+    for (const item of surfaceItems) {
+        if (typeof item.drawStem === "function") {
+            item.drawStem(ctx);
+        }
     }
 
     for (const fish of fishes) {
@@ -227,9 +248,9 @@ function animate() {
     updateEffectList(ripples, dt);
     drawEffectList(ripples, ctx);
 
-    // Draw lily pad and flower bodies (on top of stems and fish)
-    for (const pad of lilyPads) {
-        pad.draw(ctx);
+    // Draw surface items (on top of stems and fish)
+    for (const item of surfaceItems) {
+        item.draw(ctx);
     }
 
     dragonflyTimer--;
@@ -247,32 +268,29 @@ function animate() {
 init();
 animate();
 
-function beginPadDrag(x, y) {
-    for (let i = lilyPads.length - 1; i >= 0; i--) {
-        const pad = lilyPads[i];
-        if (pad.containsPoint(x, y)) {
-            draggingPad = pad;
-            draggingPad.beginDrag();
-            dragOffsetX = pad.x - x;
-            dragOffsetY = pad.y - y;
-            dragVelocityX = 0;
-            dragVelocityY = 0;
-            lastDragSampleTime =
-                typeof performance !== "undefined"
-                    ? performance.now()
-                    : Date.now();
-            lilyPads.splice(i, 1);
-            lilyPads.push(pad);
-            return true;
-        }
+function beginSurfaceItemDrag(x, y) {
+    for (let i = surfaceItems.length - 1; i >= 0; i--) {
+        const item = surfaceItems[i];
+        if (!item.containsPoint || !item.containsPoint(x, y)) continue;
+        draggingItem = item;
+        draggingItem.beginDrag();
+        dragOffsetX = item.x - x;
+        dragOffsetY = item.y - y;
+        dragVelocityX = 0;
+        dragVelocityY = 0;
+        lastDragSampleTime =
+            typeof performance !== "undefined" ? performance.now() : Date.now();
+        surfaceItems.splice(i, 1);
+        surfaceItems.push(item);
+        return true;
     }
     return false;
 }
 
-function endPadDrag() {
-    if (!draggingPad) return;
-    draggingPad.releaseMomentum(dragVelocityX, dragVelocityY);
-    draggingPad = null;
+function endSurfaceItemDrag() {
+    if (!draggingItem) return;
+    draggingItem.releaseMomentum(dragVelocityX, dragVelocityY);
+    draggingItem = null;
 }
 
 function updateEffectList(list, dt) {
