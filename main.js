@@ -1,8 +1,6 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-let width = 0;
-let height = 0;
 let fishes = [];
 let surfaceItems = [];
 let ripples = [];
@@ -40,11 +38,6 @@ function positionRaft() {
 }
 
 function init() {
-    if (!canvas || !ctx) {
-        console.error("Canvas or context not available");
-        return;
-    }
-    
     pond = new Pond(window.innerWidth, window.innerHeight);
     resize();
     window.addEventListener("resize", resize);
@@ -64,15 +57,11 @@ function init() {
 
     const handleStart = (e) => {
         const coords = getEventCoords(e);
-        if (!coords || coords.x === undefined || coords.y === undefined) return;
-        
         if (beginSurfaceItemDrag(coords.x, coords.y)) {
             return;
         }
         for (const fish of fishes) {
-            if (fish && typeof fish.setTarget === "function") {
-                fish.setTarget(coords.x, coords.y);
-            }
+            fish.setTarget(coords.x, coords.y);
         }
         ripples.push(new Ripple(coords.x, coords.y));
     };
@@ -81,8 +70,6 @@ function init() {
         if (!draggingItem) return;
         e.preventDefault(); // Prevent scrolling on mobile
         const coords = getEventCoords(e);
-        if (!coords || coords.x === undefined || coords.y === undefined) return;
-        
         const now =
             typeof performance !== "undefined" ? performance.now() : Date.now();
         const dt = Math.max((now - lastDragSampleTime) / 1000, 0.001);
@@ -168,6 +155,10 @@ function init() {
         })
     );
 
+    // // Spawn Random Fish(leave commented out for now)
+    //  for (let i = 0; i < 10; i++) {
+    //      fishes.push(new Fish(Math.random() * width, Math.random() * height));
+    //  }
 
     surfaceItems = [];
     const padCount = 5;
@@ -246,8 +237,6 @@ function init() {
 let dragonflyTimer = 0;
 
 function animate() {
-    if (!canvas || !ctx) return;
-    
     const now =
         typeof performance !== "undefined" ? performance.now() : Date.now();
     const dt = Math.min((now - lastFrameTime) / 1000, 0.05);

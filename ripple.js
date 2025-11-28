@@ -24,6 +24,11 @@ class Ripple extends Effect {
         }
     }
 
+    isFinished() {
+        return !this.active;
+    }
+
+
     draw(ctx) {
         ctx.save();
 
