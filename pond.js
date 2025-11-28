@@ -3,6 +3,7 @@ class Pond {
         this.width = width;
         this.height = height;
         this.effects = new WaterEffectsController(width, height);
+        this.caustics = new Caustics(width, height);
     }
 
     resize(width, height) {
@@ -11,11 +12,17 @@ class Pond {
         if (this.effects) {
             this.effects.resize(width, height);
         }
+        if (this.caustics) {
+            this.caustics.resize(width, height);
+        }
     }
 
     update(dt = 0.016) {
         if (this.effects) {
             this.effects.update(dt);
+        }
+        if (this.caustics) {
+            this.caustics.update(dt);
         }
     }
 
@@ -30,6 +37,12 @@ class Pond {
     }
 
     drawOverlay(ctx) {
+        // Draw caustics first (light patterns on water)
+        if (this.caustics) {
+            this.caustics.draw(ctx);
+        }
+        
+        // Then draw depth gradient overlay
         const gradient = ctx.createRadialGradient(
             this.width / 2,
             this.height / 2,
