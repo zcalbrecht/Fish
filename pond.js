@@ -39,11 +39,14 @@ class Pond {
             this.height * 0.8
         );
 
-        gradient.addColorStop(0, "rgba(0, 6, 20, 0.15)");
-        gradient.addColorStop(1, "rgba(0, 3, 12, 0.7)");
+        gradient.addColorStop(0, "rgba(12, 30, 62, 0.17)");
+        gradient.addColorStop(0.45, "rgba(4, 14, 32, 0.62)");
+        gradient.addColorStop(0.75, "rgba(0, 3, 10, 0.93)");
+        gradient.addColorStop(1, "rgba(0, 0, 1, 1)");
 
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, this.width, this.height);
     }
+
 }
 

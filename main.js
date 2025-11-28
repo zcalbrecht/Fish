@@ -16,6 +16,8 @@ let lastFrameTime =
 let lastDragSampleTime = 0;
 let dragVelocityX = 0;
 let dragVelocityY = 0;
+const DUCKWEED_CLUSTER_RADIUS = 100;
+let duckweedDragGroup = null;
 
 function resize() {
     width = canvas.width = window.innerWidth;
@@ -74,6 +76,11 @@ function init() {
         const nextX = coords.x + dragOffsetX;
         const nextY = coords.y + dragOffsetY;
         draggingItem.setPosition(nextX, nextY);
+        const deltaX = draggingItem.x - prevX;
+        const deltaY = draggingItem.y - prevY;
+        if (duckweedDragGroup && duckweedDragGroup.length) {
+            moveDuckweedGroup(deltaX, deltaY);
+        }
         dragVelocityX = (draggingItem.x - prevX) / dt;
         dragVelocityY = (draggingItem.y - prevY) / dt;
         lastDragSampleTime = now;
@@ -163,6 +170,22 @@ function init() {
         pad.popInDelay = i * 0.1;
         surfaceItems.push(pad);
 
+        if (Math.random() < 0.6) {
+            const clusterAngle = Math.random() * Math.PI * 2;
+            const clusterDistance = size * 0.6 + Math.random() * 20;
+            const clusterX = x + Math.cos(clusterAngle) * clusterDistance;
+            const clusterY = y + Math.sin(clusterAngle) * clusterDistance;
+            spawnDuckweedClusterAt(surfaceItems, clusterX, clusterY, {
+                radius: Math.max(15, size * 0.35),
+                leafMin: 3,
+                leafMax: 7,
+                baseDelay: pad.popInDelay + 0.15,
+                margin: 15,
+                minSpacing: 8,
+                attemptsPerLeaf: 4,
+            });
+        }
+
         // 20% chance to spawn a flower buddy nearby
         if (Math.random() < 0.2) {
             // Pick a spot next to the pad (size + margin)
@@ -194,6 +217,8 @@ function init() {
         }
     }
 
+    spawnDuckweedClusters(surfaceItems);
+
     const raftSize = 75;
     raft = new Raft(0, 0, raftSize);
     raft.popInDelay = padCount * 0.1 + 0.3;
@@ -212,7 +237,7 @@ function animate() {
     const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
     lastFrameTime = now;
 
-    ctx.fillStyle = "#001123";
+    ctx.fillStyle = "#071c32";
     ctx.fillRect(0, 0, width, height);
 
     if (pond) {
@@ -272,6 +297,10 @@ function beginSurfaceItemDrag(x, y) {
     for (let i = surfaceItems.length - 1; i >= 0; i--) {
         const item = surfaceItems[i];
         if (!item.containsPoint || !item.containsPoint(x, y)) continue;
+        const duckweedNeighbors =
+            typeof Duckweed !== "undefined" && item instanceof Duckweed
+                ? findDuckweedNeighbors(item, DUCKWEED_CLUSTER_RADIUS)
+                : null;
         draggingItem = item;
         draggingItem.beginDrag();
         dragOffsetX = item.x - x;
@@ -280,6 +309,14 @@ function beginSurfaceItemDrag(x, y) {
         dragVelocityY = 0;
         lastDragSampleTime =
             typeof performance !== "undefined" ? performance.now() : Date.now();
+        if (duckweedNeighbors && duckweedNeighbors.length) {
+            duckweedDragGroup = duckweedNeighbors;
+            for (const leaf of duckweedDragGroup) {
+                leaf.beginDrag();
+            }
+        } else {
+            duckweedDragGroup = null;
+        }
         surfaceItems.splice(i, 1);
         surfaceItems.push(item);
         return true;
@@ -290,6 +327,12 @@ function beginSurfaceItemDrag(x, y) {
 function endSurfaceItemDrag() {
     if (!draggingItem) return;
     draggingItem.releaseMomentum(dragVelocityX, dragVelocityY);
+    if (duckweedDragGroup && duckweedDragGroup.length) {
+        for (const leaf of duckweedDragGroup) {
+            leaf.releaseMomentum(dragVelocityX, dragVelocityY);
+        }
+        duckweedDragGroup = null;
+    }
     draggingItem = null;
 }
 
@@ -307,4 +350,102 @@ function drawEffectList(list, ctx) {
     for (const effect of list) {
         effect.draw(ctx);
     }
+}
+
+function spawnDuckweedClusters(surfaceItems) {
+    if (!surfaceItems || typeof Duckweed === "undefined") return;
+
+    const clusters = 2 + Math.floor(Math.random() * 2);
+    const margin = 30;
+
+    for (let c = 0; c < clusters; c++) {
+        const centerX = margin + Math.random() * (width - margin * 2);
+        const centerY = margin + Math.random() * (height - margin * 2);
+        const clusterRadius = 20 + Math.random() * 80;
+        const baseDelay = surfaceItems.length * 0.05 + c * 0.08;
+
+        spawnDuckweedClusterAt(surfaceItems, centerX, centerY, {
+            radius: clusterRadius,
+            leafMin: 8,
+            leafMax: 47,
+            baseDelay,
+            margin,
+        });
+    }
+}
+
+function spawnDuckweedClusterAt(surfaceItems, centerX, centerY, options = {}) {
+    if (!surfaceItems || typeof Duckweed === "undefined") return;
+
+    const {
+        radius = 45,
+        leafMin = 3,
+        leafMax = 6,
+        baseDelay = surfaceItems.length * 0.05,
+        margin = 30,
+        minSpacing = 12,
+        attemptsPerLeaf = 6,
+    } = options;
+
+    const minCount = Math.max(1, Math.floor(leafMin));
+    const maxCount = Math.max(minCount, Math.floor(leafMax));
+    const leaves = minCount + Math.floor(Math.random() * (maxCount - minCount + 1));
+    const placedLeaves = [];
+
+    for (let i = 0; i < leaves; i++) {
+        let placed = false;
+        let attempt = 0;
+        while (!placed && attempt < attemptsPerLeaf) {
+            attempt++;
+            const angle = Math.random() * Math.PI * 2;
+            const distance = radius * (0.35 + Math.pow(Math.random(), 0.65) * 0.65);
+            const skewX = 0.75 + Math.random() * 0.5;
+            const skewY = 0.75 + Math.random() * 0.5;
+            const candidateX = clamp(centerX + Math.cos(angle) * distance * skewX, margin, width - margin);
+            const candidateY = clamp(centerY + Math.sin(angle) * distance * skewY, margin, height - margin);
+
+            let tooClose = false;
+            for (const existing of placedLeaves) {
+                if (Math.hypot(existing.x - candidateX, existing.y - candidateY) < minSpacing) {
+                    tooClose = true;
+                    break;
+                }
+            }
+
+            if (tooClose) continue;
+
+            placedLeaves.push({ x: candidateX, y: candidateY });
+            const size = 5 + Math.random() * 6;
+            const leaf = new Duckweed(candidateX, candidateY, size);
+            leaf.popInDelay = baseDelay + i * 0.03;
+            surfaceItems.push(leaf);
+            placed = true;
+        }
+    }
+}
+
+function moveDuckweedGroup(deltaX, deltaY) {
+    if (!duckweedDragGroup || (!deltaX && !deltaY)) return;
+    for (const leaf of duckweedDragGroup) {
+        const x = clamp(leaf.x + deltaX, 0, width);
+        const y = clamp(leaf.y + deltaY, 0, height);
+        leaf.setPosition(x, y);
+    }
+}
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function findDuckweedNeighbors(source, radius) {
+    if (!surfaceItems || !(source instanceof Duckweed)) return [];
+    const neighbors = [];
+    for (const candidate of surfaceItems) {
+        if (candidate === source || !(candidate instanceof Duckweed)) continue;
+        const dist = Math.hypot(candidate.x - source.x, candidate.y - source.y);
+        if (dist <= radius) {
+            neighbors.push(candidate);
+        }
+    }
+    return neighbors;
 }

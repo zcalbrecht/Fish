@@ -39,7 +39,7 @@ class WaterPolygonEffect extends Effect {
         ctx.rotate(this.angle);
         const prevFilter = ctx.filter || 'none';
         ctx.filter = 'blur(5px)';
-        ctx.fillStyle = `hsla(${this.hue}, 60%, 20%, ${this.opacity})`;
+        ctx.fillStyle = `hsla(${this.hue}, 55%, 28%, ${this.opacity})`;
 
         ctx.beginPath();
         for (let i = 0; i < this.sides; i++) {
