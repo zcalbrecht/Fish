@@ -222,6 +222,10 @@ class Fish extends Item {
         this.fleeing = false;
         this.fleeTimer = 0;
 
+        // Bubble behavior
+        this.bubbleTimer = 5 + Math.random() * 15; // Initial delay longer
+        this.bubbleBurstCount = 0;
+
         // Initialize Whiskers if needed
         if (this.ornament === "whiskers") {
             const minLen = this.length * 4; // half of 8-length
@@ -263,12 +267,9 @@ class Fish extends Item {
         this.target.y = y;
     }
 
-    update() {
+    update(dt = 0.016, bubbles = null) {
         // Update pop-in animation
-        // Assuming ~60fps, dt is roughly 1/60 = 0.016
-        // Since Fish.update() doesn't take dt, we'll estimate it or update Main to pass it.
-        // For now, fixed step estimation.
-        this.updatePopIn(0.016);
+        this.updatePopIn(dt);
 
         // Head follows target
         const head = this.segments[0];
@@ -340,6 +341,33 @@ class Fish extends Item {
         // Autonomous behavior
         if (distToTarget < 50) {
             this.pickNewTarget();
+        }
+
+        // Bubble Logic
+        if (bubbles) {
+            this.bubbleTimer -= dt;
+            
+            if (this.bubbleBurstCount > 0 && this.bubbleTimer <= 0) {
+                // Emit bubble from head
+                const head = this.segments[0];
+                // Offset slightly to front of head
+                const offset = this.bodyWidth.head * 0.8;
+                const bx = head.x + Math.cos(head.angle) * offset;
+                const by = head.y + Math.sin(head.angle) * offset;
+
+                bubbles.push(new Bubble(bx, by));
+
+                this.bubbleBurstCount--;
+                
+                // If more bubbles in burst, short delay; otherwise long delay until next burst
+                this.bubbleTimer = this.bubbleBurstCount > 0 
+                    ? 0.1 + Math.random() * 0.2 
+                    : 15 + Math.random() * 30;
+            } else if (this.bubbleBurstCount === 0 && this.bubbleTimer <= 0) {
+                // Start new burst
+                this.bubbleBurstCount = Math.floor(2 + Math.random() * 3);
+                this.bubbleTimer = 0.05;
+            }
         }
 
         // Update Whiskers

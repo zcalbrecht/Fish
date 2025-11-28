@@ -54,10 +54,6 @@ class LilyPad extends SurfaceItem {
 
     drawStem(ctx) {
         ctx.save();
-        // Scale the stem around the anchor point
-        // We translate to anchor, scale, then translate back? 
-        // Actually, stem nodes are absolute positions. 
-        // But we can scale the entire context around the anchor point.
         ctx.translate(this.anchorX, this.anchorY);
         ctx.scale(this.popInScale, this.popInScale);
         ctx.translate(-this.anchorX, -this.anchorY);

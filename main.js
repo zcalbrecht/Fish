@@ -2,6 +2,7 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 let fishes = [];
+let bubbles = [];
 let surfaceItems = [];
 let ripples = [];
 let dragonflies = [];
@@ -191,6 +192,14 @@ function init() {
             });
         }
 
+        // Chance to spawn a frog sitting on the lily pad
+        if (Math.random() < 0.25) {
+            const frogSize = size * 0.65;
+            const frog = new Frog(x, y, frogSize, { parentPad: pad });
+            frog.popInDelay = pad.popInDelay + 0.25;
+            surfaceItems.push(frog);
+        }
+
         // Slightly boosted chance to spawn a flower buddy nearby
         if (Math.random() < flowerSpawnChance) {
             // Pick a spot next to the pad (size + margin)
@@ -269,9 +278,12 @@ function animate() {
     }
 
     for (const fish of fishes) {
-        fish.update();
+        fish.update(dt, bubbles);
         fish.draw(ctx);
     }
+
+    updateEffectList(bubbles, dt);
+    drawEffectList(bubbles, ctx);
 
     if (pond) {
         pond.drawOverlay(ctx);
