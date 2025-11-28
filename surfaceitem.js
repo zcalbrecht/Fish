@@ -55,17 +55,21 @@ class SurfaceItem extends Item {
                 const nx = dx / dist;
                 const ny = dy / dist;
 
-                const aFlex = a.isDragging ? 0.2 : 0.5;
-                const bFlex = b.isDragging ? 0.2 : 0.5;
-                const flexSum = aFlex + bFlex;
+                // Dragged items are immovable; non-dragged yield fully
+                const aFlex = a.isDragging ? 0 : 0.5;
+                const bFlex = b.isDragging ? 0 : 0.5;
+                const flexSum = aFlex + bFlex || 1; // avoid /0 when both dragged
 
-                const moveA = overlap * (bFlex / flexSum);
-                const moveB = overlap * (aFlex / flexSum);
+                const moveA = overlap * (aFlex / flexSum);
+                const moveB = overlap * (bFlex / flexSum);
 
                 a.x -= nx * moveA;
                 a.y -= ny * moveA;
                 b.x += nx * moveB;
                 b.y += ny * moveB;
+
+                // Skip velocity exchange if either is dragged
+                if (a.isDragging || b.isDragging) continue;
 
                 const relativeNormalVel =
                     (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;

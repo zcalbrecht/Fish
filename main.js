@@ -1,6 +1,11 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+const MOBILE_BREAKPOINT = 768;
+const MOBILE_VIEW_SCALE = 0.85;
 
+let width = window.innerWidth;
+let height = window.innerHeight;
+let viewportScale = 1;
 let fishes = [];
 let surfaceItems = [];
 let ripples = [];
@@ -20,8 +25,17 @@ const DUCKWEED_CLUSTER_RADIUS = 100;
 let duckweedDragGroup = null;
 
 function resize() {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
+    viewportScale = window.innerWidth <= MOBILE_BREAKPOINT ? MOBILE_VIEW_SCALE : 1;
+    const displayWidth = window.innerWidth;
+    const displayHeight = window.innerHeight;
+    const scaledWidth = Math.round(displayWidth / viewportScale);
+    const scaledHeight = Math.round(displayHeight / viewportScale);
+    canvas.width = scaledWidth;
+    canvas.height = scaledHeight;
+    canvas.style.width = `${displayWidth}px`;
+    canvas.style.height = `${displayHeight}px`;
+    width = scaledWidth;
+    height = scaledHeight;
     if (pond) pond.resize(width, height);
     positionRaft();
 }
@@ -36,21 +50,17 @@ function positionRaft() {
 }
 
 function init() {
-    pond = new Pond(window.innerWidth, window.innerHeight);
     resize();
+    pond = new Pond(width, height);
     window.addEventListener("resize", resize);
 
     // Helper to get coordinates from mouse or touch events
     const getEventCoords = (e) => {
-        if (e.touches && e.touches.length > 0) {
-            return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        } else if (e.changedTouches && e.changedTouches.length > 0) {
-            return {
-                x: e.changedTouches[0].clientX,
-                y: e.changedTouches[0].clientY,
-            };
-        }
-        return { x: e.clientX, y: e.clientY };
+        const point =
+            (e.touches && e.touches.length && e.touches[0]) ||
+            (e.changedTouches && e.changedTouches.length && e.changedTouches[0]) ||
+            e;
+        return toCanvasCoords(point.clientX, point.clientY);
     };
 
     const handleStart = (e) => {
@@ -448,4 +458,14 @@ function findDuckweedNeighbors(source, radius) {
         }
     }
     return neighbors;
+}
+
+function toCanvasCoords(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = rect.width ? canvas.width / rect.width : 1;
+    const scaleY = rect.height ? canvas.height / rect.height : 1;
+    return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY,
+    };
 }
