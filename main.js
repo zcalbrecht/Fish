@@ -7,6 +7,10 @@ let ripples = [];
 let dragonflies = [];
 let pond = null;
 let raft = null;
+let bubbleEmitter = null;
+let lightRaySystem = null;
+let fishTrailSystem = null;
+let sparkleSystem = null;
 
 let draggingItem = null;
 let dragOffsetX = 0;
@@ -25,6 +29,8 @@ function resize() {
     height = canvas.height = window.innerHeight;
     ResponsiveScale.setScale(width, height);
     if (pond) pond.resize(width, height);
+    if (bubbleEmitter) bubbleEmitter.resize(width, height);
+    if (lightRaySystem) lightRaySystem.resize(width, height);
     positionRaft();
 }
 
@@ -39,6 +45,10 @@ function positionRaft() {
 
 function init() {
     pond = new Pond(window.innerWidth, window.innerHeight);
+    bubbleEmitter = new BubbleEmitter(window.innerWidth, window.innerHeight);
+    lightRaySystem = new LightRaySystem(window.innerWidth, window.innerHeight);
+    fishTrailSystem = new FishTrailSystem();
+    sparkleSystem = new SparkleSystem();
     resize();
     window.addEventListener("resize", resize);
 
@@ -85,6 +95,12 @@ function init() {
         }
         dragVelocityX = (draggingItem.x - prevX) / dt;
         dragVelocityY = (draggingItem.y - prevY) / dt;
+        
+        // Spawn sparkles when dragging fast
+        if (sparkleSystem && Math.hypot(dragVelocityX, dragVelocityY) > 50) {
+            sparkleSystem.spawnSparkles(draggingItem.x, draggingItem.y, dragVelocityX, dragVelocityY, 3);
+        }
+        
         lastDragSampleTime = now;
     };
 
@@ -250,6 +266,12 @@ function animate() {
         pond.drawBackground(ctx);
     }
 
+    // Draw light rays (after background, before fish)
+    if (lightRaySystem) {
+        lightRaySystem.update(dt);
+        lightRaySystem.draw(ctx);
+    }
+
     // Update surface items (needed for transforms/stems)
     for (const item of surfaceItems) {
         if (typeof item.update === "function") {
@@ -268,9 +290,34 @@ function animate() {
         }
     }
 
+    // Update bubbles
+    if (bubbleEmitter) {
+        bubbleEmitter.update(dt, fishes);
+    }
+
+    // Draw bubbles (before fish so they appear behind)
+    if (bubbleEmitter) {
+        bubbleEmitter.draw(ctx);
+    }
+
     for (const fish of fishes) {
         fish.update();
+        // Spawn trail particles from fish tail
+        if (fishTrailSystem && fish.segments && fish.segments.length > 0) {
+            const tailIndex = Math.floor(fish.segments.length * 0.7);
+            const tailSeg = fish.segments[tailIndex];
+            if (tailSeg) {
+                const tailColor = fish.getSegmentColorAt(tailIndex / (fish.segments.length - 1));
+                fishTrailSystem.spawnParticle(tailSeg.x, tailSeg.y, tailColor);
+            }
+        }
         fish.draw(ctx);
+    }
+
+    // Draw fish trails
+    if (fishTrailSystem) {
+        fishTrailSystem.update(dt);
+        fishTrailSystem.draw(ctx);
     }
 
     if (pond) {
@@ -294,6 +341,12 @@ function animate() {
 
     updateEffectList(dragonflies, dt);
     drawEffectList(dragonflies, ctx);
+
+    // Update and draw sparkles (on top of everything)
+    if (sparkleSystem) {
+        sparkleSystem.update(dt);
+        sparkleSystem.draw(ctx);
+    }
 
     requestAnimationFrame(animate);
 }
@@ -334,6 +387,12 @@ function beginSurfaceItemDrag(x, y) {
 
 function endSurfaceItemDrag() {
     if (!draggingItem) return;
+    
+    // Spawn sparkles on release if there was momentum
+    if (sparkleSystem && Math.hypot(dragVelocityX, dragVelocityY) > 30) {
+        sparkleSystem.spawnSparkles(draggingItem.x, draggingItem.y, dragVelocityX, dragVelocityY, 8);
+    }
+    
     draggingItem.releaseMomentum(dragVelocityX, dragVelocityY);
     if (duckweedDragGroup && duckweedDragGroup.length) {
         for (const leaf of duckweedDragGroup) {
