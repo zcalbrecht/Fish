@@ -43,22 +43,14 @@ class Flower extends LilyPad {
         ctx.save();
         ctx.rotate(this.flowerOffsetAngle);
 
-        // Glow effect
-        const time = Date.now() / 2000;
-        const glowIntensity = 0.3 + Math.sin(time) * 0.1;
-        ctx.save();
-        ctx.shadowBlur = 15 * scale;
-        // Use the flower color with opacity for glow
-        ctx.shadowColor = this.flowerColor;
-        
-        const angleStep = (Math.PI * 2) / this.petalCount;
-
         // Shadow
         ctx.save();
         ctx.translate(5 * scale, 5 * scale);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
         ctx.shadowBlur = 5 * scale;
         ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+        
+        const angleStep = (Math.PI * 2) / this.petalCount;
         
         for (let i = 0; i < this.petalCount; i++) {
             ctx.save();
@@ -119,18 +111,6 @@ class Flower extends LilyPad {
         ctx.beginPath();
         ctx.arc(0, 0, this.flowerSize * 0.25, 0, Math.PI * 2);
         ctx.fill();
-        
-        ctx.restore();
-        
-        // Outer glow ring
-        ctx.save();
-        ctx.globalAlpha = glowIntensity * 0.4;
-        ctx.strokeStyle = this.flowerColor;
-        ctx.lineWidth = 2 * scale;
-        ctx.beginPath();
-        ctx.arc(0, 0, this.flowerSize * 1.1, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
         
         ctx.restore();
     }
