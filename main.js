@@ -260,7 +260,9 @@ function animate() {
     SurfaceItem.resolveAll(surfaceItems);
 
     // Draw all stems first (bottom layer, before everything else)
-    for (const item of surfaceItems) {
+    // Sort by layer to maintain z-order
+    const sortedItemsForStems = [...surfaceItems].sort((a, b) => (a.layer || 0) - (b.layer || 0));
+    for (const item of sortedItemsForStems) {
         if (typeof item.drawStem === "function") {
             item.drawStem(ctx);
         }
@@ -279,7 +281,8 @@ function animate() {
     drawEffectList(ripples, ctx);
 
     // Draw surface items (on top of stems and fish)
-    for (const item of surfaceItems) {
+    // Sort by layer to maintain z-order: duckweed (0) < lilypad (1) < flower (2) < raft (3)
+    for (const item of sortedItemsForStems) {
         item.draw(ctx);
     }
 

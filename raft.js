@@ -1,6 +1,8 @@
 class Raft extends SurfaceItem {
     constructor(x, y, size = 70) {
         super(x, y, size);
+        this.layer = 3; // Highest z-level
+        this.collisionScale = 0.9; // Allow closer overlap
         this.width = size * 2;
         this.height = size * 1.2;
         this.wavePhase = Math.random() * Math.PI * 2;

@@ -8,6 +8,12 @@ class SurfaceItem extends Item {
         this.vy = 0;
         this.isDragging = false;
         this.momentumFriction = 8;
+        
+        // Layer order (lower = drawn first/behind, higher = drawn last/on top)
+        this.layer = 0;
+        
+        // Collision scale factor (1.0 = full size, < 1.0 = smaller collision radius)
+        this.collisionScale = 1.0;
     }
 
     containsPoint(x, y) {
@@ -48,7 +54,9 @@ class SurfaceItem extends Item {
                 const dx = b.x - a.x;
                 const dy = b.y - a.y;
                 const dist = Math.hypot(dx, dy) || 0.0001;
-                const minDist = a.size + b.size;
+                const aCollisionRadius = (a.collisionScale || 1.0) * a.size;
+                const bCollisionRadius = (b.collisionScale || 1.0) * b.size;
+                const minDist = aCollisionRadius + bCollisionRadius;
                 if (dist >= minDist) continue;
 
                 const overlap = minDist - dist;

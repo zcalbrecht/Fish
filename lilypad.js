@@ -1,6 +1,8 @@
 class LilyPad extends SurfaceItem {
     constructor(x, y, size) {
         super(x, y, size);
+        this.layer = 1; // Third highest z-level
+        this.collisionScale = 0.9; // Allow closer overlap
         this.angle = Math.random() * Math.PI * 2;
         // Random shade of green
         this.color = `hsl(${100 + Math.random() * 40}, 60%, ${30 + Math.random() * 20}%)`;

@@ -2,6 +2,8 @@ class Flower extends LilyPad {
     constructor(x, y, size) {
         super(x, y, size);
         // Flower overrides
+        this.layer = 2; // Second highest z-level
+        this.collisionScale = 0.9; // Allow closer overlap
         this.isFlower = true;
         this.notchWidth = 0; // No notch
         this.hasFlower = true; // Always has visual flower parts
