@@ -151,7 +151,7 @@ class Stem {
         gradient.addColorStop(1, "rgba(70, 110, 70, 0)");
 
         ctx.strokeStyle = gradient;
-        ctx.lineWidth = 4.5;
+        ctx.lineWidth = 4.5 * ResponsiveScale.getScale();
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
 

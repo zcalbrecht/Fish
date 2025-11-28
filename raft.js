@@ -45,9 +45,10 @@ class Raft extends SurfaceItem {
 
     drawShadow(ctx) {
         ctx.save();
+        const scale = ResponsiveScale.getScale();
         const shadowWidth = this.width * 1.05;
         const shadowHeight = this.height * 1.05;
-        ctx.filter = "blur(10px)";
+        ctx.filter = `blur(${10 * scale}px)`;
         ctx.globalAlpha = 0.65;
         ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
         this.roundedRectPath(
@@ -75,13 +76,14 @@ class Raft extends SurfaceItem {
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        ctx.lineWidth = 2;
+        const scale = ResponsiveScale.getScale();
+        ctx.lineWidth = 2 * scale;
         ctx.strokeStyle = "rgba(0, 0, 0, 0.25)";
         ctx.stroke();
 
         const plankCount = 3;
         const inset = this.size * 0.2;
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.2 * scale;
         ctx.strokeStyle = "rgba(0, 0, 0, 0.25)";
         for (let i = 1; i < plankCount; i++) {
             const y = -halfH + (this.height * i) / plankCount;
@@ -92,7 +94,7 @@ class Raft extends SurfaceItem {
         }
 
         ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
-        ctx.lineWidth = 1;
+        ctx.lineWidth = scale;
         ctx.beginPath();
         ctx.moveTo(-halfW + inset * 0.5, -halfH + inset * 0.4);
         ctx.lineTo(halfW - inset * 0.5, -halfH + inset * 0.2);
@@ -109,7 +111,8 @@ class Raft extends SurfaceItem {
         const halfH = this.height / 2;
         const braceInset = this.size * 0.15;
         ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
-        ctx.lineWidth = 2.5;
+        const scale = ResponsiveScale.getScale();
+        ctx.lineWidth = 2.5 * scale;
 
         for (const sign of [-1, 1]) {
             ctx.beginPath();
@@ -119,7 +122,7 @@ class Raft extends SurfaceItem {
         }
 
         ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
-        const pegRadius = Math.max(2, this.size * 0.08);
+        const pegRadius = Math.max(2 * scale, this.size * 0.08);
         for (const sx of [-1, 1]) {
             for (const sy of [-1, 1]) {
                 ctx.beginPath();

@@ -16,20 +16,22 @@ let lastFrameTime =
 let lastDragSampleTime = 0;
 let dragVelocityX = 0;
 let dragVelocityY = 0;
-const DUCKWEED_CLUSTER_RADIUS = 100;
+const BASE_DUCKWEED_CLUSTER_RADIUS = 100;
 let duckweedDragGroup = null;
+const scaleValue = (value) => ResponsiveScale.scaleValue(value);
 
 function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
+    ResponsiveScale.setScale(width, height);
     if (pond) pond.resize(width, height);
     positionRaft();
 }
 
 function positionRaft() {
     if (!raft) return;
-    const marginX = raft.width * 0.5 + 40;
-    const marginY = raft.height * 0.5 + 60;
+    const marginX = raft.width * 0.5 + scaleValue(40);
+    const marginY = raft.height * 0.5 + scaleValue(60);
     const targetX = Math.max(marginX, width - marginX);
     const targetY = Math.max(marginY, height - marginY);
     raft.setPosition(targetX, targetY);
@@ -161,10 +163,12 @@ function init() {
     surfaceItems = [];
     const padCount = 5;
     const flowerSpawnChance = 0.3;
+    const duckweedMargin = scaleValue(15);
+
     for (let i = 0; i < padCount; i++) {
         const x = Math.random() * width;
         const y = Math.random() * height;
-        const size = 40 + Math.random() * 40;
+        const size = scaleValue(40 + Math.random() * 40);
 
         const pad = new LilyPad(x, y, size);
         // Add delay: 0.1s per index
@@ -173,16 +177,16 @@ function init() {
 
         if (Math.random() < 0.6) {
             const clusterAngle = Math.random() * Math.PI * 2;
-            const clusterDistance = size * 0.6 + Math.random() * 20;
+            const clusterDistance = size * 0.6 + scaleValue(Math.random() * 20);
             const clusterX = x + Math.cos(clusterAngle) * clusterDistance;
             const clusterY = y + Math.sin(clusterAngle) * clusterDistance;
             spawnDuckweedClusterAt(surfaceItems, clusterX, clusterY, {
-                radius: Math.max(15, size * 0.35),
+                radius: Math.max(scaleValue(15), size * 0.35),
                 leafMin: 3,
                 leafMax: 7,
                 baseDelay: pad.popInDelay + 0.15,
-                margin: 15,
-                minSpacing: 8,
+                margin: duckweedMargin,
+                minSpacing: scaleValue(8),
                 attemptsPerLeaf: 4,
             });
         }
@@ -191,7 +195,7 @@ function init() {
         if (Math.random() < flowerSpawnChance) {
             // Pick a spot next to the pad (size + margin)
             const angle = Math.random() * Math.PI * 2;
-            const dist = size + 15 + Math.random() * 20;
+            const dist = size + scaleValue(15 + Math.random() * 20);
             const fx = x + Math.cos(angle) * dist;
             const fy = y + Math.sin(angle) * dist;
 
@@ -206,7 +210,7 @@ function init() {
         else if (Math.random() < 0.4) {
             // Pick a spot next to the pad (size + margin)
             const angle = Math.random() * Math.PI * 2;
-            const dist = size + 15 + Math.random() * 20;
+            const dist = size + scaleValue(15 + Math.random() * 20);
             const sx = x + Math.cos(angle) * dist;
             const sy = y + Math.sin(angle) * dist;
 
@@ -220,7 +224,7 @@ function init() {
 
     spawnDuckweedClusters(surfaceItems);
 
-    const raftSize = 75;
+    const raftSize = scaleValue(75);
     raft = new Raft(0, 0, raftSize);
     raft.popInDelay = padCount * 0.1 + 0.3;
     surfaceItems.push(raft);
@@ -300,7 +304,7 @@ function beginSurfaceItemDrag(x, y) {
         if (!item.containsPoint || !item.containsPoint(x, y)) continue;
         const duckweedNeighbors =
             typeof Duckweed !== "undefined" && item instanceof Duckweed
-                ? findDuckweedNeighbors(item, DUCKWEED_CLUSTER_RADIUS)
+                ? findDuckweedNeighbors(item, getDuckweedClusterRadius())
                 : null;
         draggingItem = item;
         draggingItem.beginDrag();
@@ -357,12 +361,12 @@ function spawnDuckweedClusters(surfaceItems) {
     if (!surfaceItems || typeof Duckweed === "undefined") return;
 
     const clusters = 2 + Math.floor(Math.random() * 2);
-    const margin = 30;
+    const margin = scaleValue(30);
 
     for (let c = 0; c < clusters; c++) {
         const centerX = margin + Math.random() * (width - margin * 2);
         const centerY = margin + Math.random() * (height - margin * 2);
-        const clusterRadius = 20 + Math.random() * 80;
+        const clusterRadius = scaleValue(20 + Math.random() * 80);
         const baseDelay = surfaceItems.length * 0.05 + c * 0.08;
 
         spawnDuckweedClusterAt(surfaceItems, centerX, centerY, {
@@ -379,12 +383,12 @@ function spawnDuckweedClusterAt(surfaceItems, centerX, centerY, options = {}) {
     if (!surfaceItems || typeof Duckweed === "undefined") return;
 
     const {
-        radius = 45,
+        radius = scaleValue(45),
         leafMin = 3,
         leafMax = 6,
         baseDelay = surfaceItems.length * 0.05,
-        margin = 30,
-        minSpacing = 12,
+        margin = scaleValue(30),
+        minSpacing = scaleValue(12),
         attemptsPerLeaf = 6,
     } = options;
 
@@ -416,7 +420,7 @@ function spawnDuckweedClusterAt(surfaceItems, centerX, centerY, options = {}) {
             if (tooClose) continue;
 
             placedLeaves.push({ x: candidateX, y: candidateY });
-            const size = 5 + Math.random() * 6;
+            const size = scaleValue(5 + Math.random() * 6);
             const leaf = new Duckweed(candidateX, candidateY, size);
             leaf.popInDelay = baseDelay + i * 0.03;
             surfaceItems.push(leaf);
@@ -436,6 +440,10 @@ function moveDuckweedGroup(deltaX, deltaY) {
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+}
+
+function getDuckweedClusterRadius() {
+    return scaleValue(BASE_DUCKWEED_CLUSTER_RADIUS);
 }
 
 function findDuckweedNeighbors(source, radius) {

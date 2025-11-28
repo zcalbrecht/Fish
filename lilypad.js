@@ -10,7 +10,7 @@ class LilyPad extends SurfaceItem {
 
         // Stem properties
         this.stemPhase = Math.random() * Math.PI * 2;
-        const stemLength = 90 + Math.random() * 60;
+        const stemLength = ResponsiveScale.scaleValue(90 + Math.random() * 60);
         const stemSegmentCount = 12 + Math.floor(Math.random() * 5);
         this.stem = new Stem({
             length: stemLength,
@@ -67,7 +67,7 @@ class LilyPad extends SurfaceItem {
         this.withTransform(ctx, () => {
             ctx.fillStyle = this.color;
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 2 * ResponsiveScale.getScale();
 
             // Draw lily pad shape (circle with a wedge cut out)
             ctx.beginPath();
@@ -81,7 +81,7 @@ class LilyPad extends SurfaceItem {
 
             // Add some veins
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.lineWidth = 1;
+            ctx.lineWidth = ResponsiveScale.getScale();
 
             const startAngle = this.notchWidth * Math.PI;
             const endAngle = (2 - this.notchWidth) * Math.PI;

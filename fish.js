@@ -109,8 +109,9 @@ class Whisker {
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
 
-        const widthStart = 2;
-        const widthEnd = 0.2;
+        const scale = ResponsiveScale.getScale();
+        const widthStart = 2 * scale;
+        const widthEnd = 0.2 * scale;
         ctx.strokeStyle = `hsl(${h}, ${s}%, ${l}%)`;
 
         for (let i = 0; i < this.segments.length - 1; i++) {
@@ -169,6 +170,8 @@ class Fish extends Item {
         // Ornament support (e.g. 'eyes', 'whiskers', 'none')
         this.ornament = config.ornament ?? Fish.randomOrnament();
 
+        const responsiveScale = ResponsiveScale.getScale();
+
         // Size Scale: Affects width and length
         const sizeScale = config.sizeScale || 0.7 + Math.random() * 0.6; // 0.7x to 1.3x size
 
@@ -178,21 +181,21 @@ class Fish extends Item {
 
         // Segment Length: Distance between segments
         const baseLength = config.segmentLength || FISH_CONFIG.segmentLength;
-        this.length = baseLength * sizeScale;
+        this.length = baseLength * sizeScale * responsiveScale;
 
         // Body Width Profile
         const baseWidth = FISH_CONFIG.bodyWidth;
         this.bodyWidth = {
-            head: (config.headWidth || baseWidth.head) * sizeScale,
-            middle: (config.middleWidth || baseWidth.middle) * sizeScale,
-            tail: (config.tailWidth || baseWidth.tail) * sizeScale,
+            head: (config.headWidth || baseWidth.head) * sizeScale * responsiveScale,
+            middle: (config.middleWidth || baseWidth.middle) * sizeScale * responsiveScale,
+            tail: (config.tailWidth || baseWidth.tail) * sizeScale * responsiveScale,
             taperPoint: config.taperPoint || baseWidth.taperPoint,
         };
 
         // Speed Modifier
         const speedMod = config.speedMod || 0.8 + Math.random() * 0.4; // 0.8x to 1.2x speed
-        this.speed = FISH_CONFIG.speed * speedMod;
-        this.turnSpeed = FISH_CONFIG.turnSpeed * speedMod;
+        this.speed = FISH_CONFIG.speed * speedMod * responsiveScale;
+        this.turnSpeed = FISH_CONFIG.turnSpeed * speedMod * responsiveScale;
 
         // --- Initialization ---
 
@@ -384,7 +387,7 @@ class Fish extends Item {
 
         if (isSilhouette) {
             ctx.save();
-            ctx.filter = "blur(3px)";
+            ctx.filter = `blur(${3 * ResponsiveScale.getScale()}px)`;
         }
 
         // Pectoral fins

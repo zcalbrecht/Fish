@@ -2,10 +2,17 @@ class Ripple extends Effect {
     constructor(x, y) {
         super(x, y);
         this.radius = 0;
-        this.maxRadius = 80;
+        this.maxRadius = ResponsiveScale.scaleValue(80);
         this.alpha = 0.4;
-        this.speed = 80; // Units per second (faster expansion for snappier feel)
-        this.lineWidth = 6;
+        this.speed = ResponsiveScale.scaleValue(80); // Units per second (faster expansion for snappier feel)
+        this.lineWidth = ResponsiveScale.scaleValue(6);
+        this.splashThreshold = ResponsiveScale.scaleValue(20);
+        this.splashBase = ResponsiveScale.scaleValue(5);
+        this.ringOffsets = [
+            0,
+            -ResponsiveScale.scaleValue(20),
+            -ResponsiveScale.scaleValue(40),
+        ];
     }
 
     update(dt = 0.016) {
@@ -25,20 +32,20 @@ class Ripple extends Effect {
     draw(ctx) {
         ctx.save();
 
-        if (this.radius < 20) {
-            const splashProgress = this.radius / 20;
+        if (this.radius < this.splashThreshold) {
+            const splashProgress = this.radius / this.splashThreshold;
             const splashAlpha = this.alpha * (1 - splashProgress);
             if (splashAlpha > 0) {
                 ctx.fillStyle = `rgba(200, 230, 255, ${splashAlpha})`;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 5 + this.radius * 0.5, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, this.splashBase + this.radius * 0.5, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
 
-        this.drawRing(ctx, 0, this.alpha);
-        this.drawRing(ctx, -20, this.alpha * 0.8);
-        this.drawRing(ctx, -40, this.alpha * 0.6);
+        this.drawRing(ctx, this.ringOffsets[0], this.alpha);
+        this.drawRing(ctx, this.ringOffsets[1], this.alpha * 0.8);
+        this.drawRing(ctx, this.ringOffsets[2], this.alpha * 0.6);
 
         ctx.restore();
     }

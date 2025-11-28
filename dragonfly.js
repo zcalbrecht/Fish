@@ -7,7 +7,8 @@ class Dragonfly extends Effect {
 
         // Random size (scale factor)
         // Base size is small, this multiplier makes them vary
-        this.scale = 1.6 + Math.random() * 1.4; // 1.6x to 3.0x (Doubled from 0.8-1.5)
+        this.scale =
+            (1.6 + Math.random() * 1.4) * ResponsiveScale.getScale(); // 1.6x to 3.0x (Doubled from 0.8-1.5)
 
         // Random Color Hue
         this.hue = Math.floor(Math.random() * 360);
@@ -18,7 +19,7 @@ class Dragonfly extends Effect {
         // Speed: Fast but viewable
         const speed = 2 + Math.random() * 3; // 2 to 5 px/frame (Halved from 4-10)
 
-        const padding = 100; // Spawn well outside
+        const padding = ResponsiveScale.scaleValue(100); // Spawn well outside
 
         if (side === 0) { // Left
             this.x = -padding;
@@ -49,7 +50,7 @@ class Dragonfly extends Effect {
         // The higher the fly, the further the shadow?
         // Let's say it's hovering 50-150 units above water.
         // Assuming light source is somewhat overhead but angled.
-        this.height = 50 + Math.random() * 100;
+        this.height = ResponsiveScale.scaleValue(50 + Math.random() * 100);
         this.shadowOffset = {
             x: this.height * 0.2, 
             y: this.height * 0.8 // Shadow falls mostly "down" the screen

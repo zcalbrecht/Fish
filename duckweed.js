@@ -53,11 +53,11 @@ class Duckweed extends SurfaceItem {
                 ctx.fill();
 
                 ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
-                ctx.lineWidth = 0.6;
+                ctx.lineWidth = 0.6 * ResponsiveScale.getScale();
                 ctx.stroke();
 
                 ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
-                ctx.lineWidth = 0.4;
+                ctx.lineWidth = 0.4 * ResponsiveScale.getScale();
                 ctx.beginPath();
                 ctx.moveTo(-this.size * 0.6, 0);
                 ctx.lineTo(this.size * 0.6, 0);

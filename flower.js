@@ -37,14 +37,15 @@ class Flower extends LilyPad {
     }
 
     drawFlower(ctx) {
+        const scale = ResponsiveScale.getScale();
         ctx.save();
         ctx.rotate(this.flowerOffsetAngle);
 
         // Shadow
         ctx.save();
-        ctx.translate(5, 5);
+        ctx.translate(5 * scale, 5 * scale);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.shadowBlur = 5;
+        ctx.shadowBlur = 5 * scale;
         ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
         
         const angleStep = (Math.PI * 2) / this.petalCount;
@@ -75,7 +76,7 @@ class Flower extends LilyPad {
             
             // Lighter/Subtler outline
             ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-            ctx.lineWidth = 0.5;
+            ctx.lineWidth = 0.5 * scale;
             ctx.stroke();
             
             ctx.restore();
@@ -97,6 +98,7 @@ class Flower extends LilyPad {
             ctx.fill();
             
             ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = 0.5 * scale;
             ctx.stroke();
             
             ctx.restore();
