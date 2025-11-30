@@ -1,3 +1,8 @@
+const FROG_BODY_PATH = "M253.982422,37.258301L255.297363,37.300293C257.907806,37.402519,260.507538,37.691673,263.07666,38.165527C267.153381,38.523872,271.146667,39.530312,274.90625,41.146973C277.793121,42.417366,280.470337,44.1185,282.84668,46.192383C284.971832,48.082142,286.745575,50.33316,288.085938,52.841309C289.336456,55.273224,290.046387,57.946777,290.166992,60.678711C290.926331,64.282448,291.254486,67.963799,291.144531,71.64502C291.044739,76.46212,290.435181,81.255074,289.326172,85.943848C287.816315,92.502594,285.417664,98.824341,282.196777,104.733887C281.814545,105.416992,281.415253,106.090668,280.999512,106.753906C279.191162,111.146011,276.288483,115.001976,272.567871,117.95459C270.382324,119.695648,267.923218,121.062126,265.290527,121.998535C264.334015,122.32814,263.356995,122.594986,262.365723,122.797363C256.060547,124.805542,249.287857,124.80928,242.980469,122.808105C238.679474,121.90892,234.702545,119.860458,231.473145,116.880859C228.336884,114.063629,225.873718,110.577721,224.265625,106.680664C221.447922,101.999794,219.204056,96.996635,217.58252,91.779297C215.634293,85.663422,214.492493,79.319572,214.186035,72.908203C214.053894,69.61068,214.222229,66.308006,214.688965,63.041016C214.81189,62.264313,214.962219,61.492142,215.139648,60.726074C215.276321,57.161819,216.427353,53.710575,218.45752,50.777832C220.35817,47.973724,222.80658,45.583122,225.655273,43.75C229.065613,41.503361,232.859299,39.901287,236.847656,39.023438C238.618195,38.610008,240.415848,38.322998,242.227051,38.164551C246.104431,37.462898,250.04335,37.159233,253.982422,37.258301z";
+
+// Foot/hand path from SVG (webbed foot with toes)
+const FROG_FOOT_PATH = "M122.518547,39.441406L122.745613,39.476074C123.183441,39.56604,123.58519,39.782684,123.900879,40.099121C124.330772,40.388752,124.757423,40.683216,125.180656,40.982422L125.621582,41.269531C126.428513,41.785118,127.308289,42.176712,128.231445,42.431152C129.577286,42.847214,130.982544,43.03857,132.390625,42.997559L133.257324,42.987305C134.822281,42.928238,136.389084,43.041725,137.929199,43.325684C139.356018,43.616058,140.69722,44.230785,141.848633,45.12207C142.436432,45.562729,143.000824,46.033741,143.539551,46.533203L145.157715,48.058594C145.84726,48.70269,146.552856,49.329796,147.273438,49.938965L147.790527,50.40332C148.331024,50.899246,148.869171,51.39975,149.402832,51.902832L149.916504,52.376465C150.213821,52.649078,150.517929,52.91412,150.828613,53.171387L150.95752,53.313477C151.29509,53.722691,151.456116,54.249287,151.405289,54.777325C151.354462,55.305363,151.095932,55.791573,150.686523,56.128906C149.891647,56.784863,148.728439,56.729019,148,56C147.862946,55.863392,147.746735,55.707375,147.654785,55.537109L147.541504,55.39209C146.681671,54.297646,145.743164,53.267422,144.733398,52.30957C144.172897,51.849747,143.532288,51.497494,142.84375,51.270508C141.716949,50.837391,140.501495,50.685383,139.302734,50.827637C138.648788,50.932961,138.047623,51.250378,137.591797,51.730957C136.475845,52.808323,135.62468,54.129013,135.104492,55.590332C134.796844,56.675804,134.583954,57.785919,134.468262,58.908203L134.465332,58.907715L134.496094,58.991211C134.801346,59.973793,134.311798,61.027699,133.364258,61.428711C132.415695,61.829433,131.317825,61.444374,130.827148,60.539063C130.384201,59.714413,130.566635,58.693169,131.267578,58.072754C131.544739,57.818443,131.826721,57.569351,132.113281,57.325684L132.327148,57.132813C132.791519,56.723549,133.211014,56.266064,133.578613,55.768066C134.048798,55.089531,134.294403,54.280487,134.280762,53.455078C134.305695,52.941807,134.215408,52.429428,134.016602,51.955566C133.895554,51.706871,133.687164,51.511425,133.431152,51.406738C132.918381,51.145203,132.321045,51.103413,131.776855,51.291016C131.171204,51.5028,130.598083,51.797726,130.07373,52.16748C129.723907,52.401424,129.375641,52.638592,129.029785,52.878418L128.325195,53.336426L127.807129,53.662598C126.915657,54.214226,126.097427,54.876419,125.37207,55.633301C125.121986,55.898239,124.906059,56.193523,124.729492,56.512207L124.700684,56.700684C124.434433,57.993298,123.23278,58.874477,121.919922,58.739746C120.507721,58.594509,119.480591,57.332157,119.625488,55.919922C119.74099,54.789253,120.586273,53.869324,121.703133,53.658691L122.019043,53.505859C124.5028,52.328888,126.788544,50.773048,128.794434,48.894043C129.18367,48.519497,129.491547,48.068691,129.69873,47.569824C129.857651,47.209114,129.850311,46.796749,129.678711,46.441895C129.318832,45.880871,128.793121,45.445644,128.174805,45.196777C127.859253,45.049507,127.54187,44.906281,127.222656,44.76709L126.924316,44.629883C126.694199,44.522533,126.46579,44.412071,126.23877,44.29834L125.958008,44.179199C125.651917,44.07642,125.334808,44.01004,125.013184,43.981445C124.33709,43.941048,123.659317,43.938278,122.98291,43.973145C122.750137,43.975899,122.517441,43.984848,122.285156,44L122.05127,43.988281C121.830002,43.965637,121.613167,43.910892,121.407707,43.825684L121.408203,43.825195C120.317673,43.372036,119.751793,42.1628,120.102539,41.035156C120.426407,39.996983,121.436707,39.330517,122.518547,39.441406z";
+
 class Frog extends Item {
     constructor(x, y, size, options = {}) {
         super(x, y);
@@ -188,16 +193,39 @@ class Frog extends Item {
             jumpScale = 1 + stretchFactor;
         }
         
-        // Draw shadow at ground level (separate from jumping frog)
-        if (this.isJumping) {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            ctx.rotate(this.rotation);
-            ctx.scale(breathScale * (1 - jumpHeight / (this.frogSize * 4)), breathScale * (1 - jumpHeight / (this.frogSize * 4)));
-            ctx.globalAlpha = 0.3 - (jumpHeight / (this.frogSize * 4));
-            this.drawShadow(ctx, scale);
-            ctx.restore();
+        // Draw blurry drop shadow first (at ground level)
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        
+        // Use filter for blur if available, otherwise use shadowBlur
+        if (ctx.filter !== undefined) {
+            ctx.filter = `blur(${scale * 12}px)`;
+        } else {
+            ctx.shadowBlur = scale * 20;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
         }
+        
+        ctx.shadowOffsetX = scale * 3;
+        ctx.shadowOffsetY = scale * 4;
+        
+        // Draw a larger ellipse for the shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.beginPath();
+        const shadowSize = this.frogSize * 1.2;
+        ctx.ellipse(scale * 3, scale * 4, shadowSize, shadowSize * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw additional blurred layers for more blur effect
+        if (ctx.filter === undefined) {
+            ctx.shadowBlur = scale * 15;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.beginPath();
+            ctx.ellipse(scale * 3, scale * 4, shadowSize * 1.1, shadowSize * 0.75, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.restore();
         
         this.withTransform(ctx, () => {
             ctx.rotate(this.rotation);
@@ -211,11 +239,6 @@ class Frog extends Item {
             // Draw all legs first (behind body)
             this.drawBackLegs(ctx, scale);
             this.drawFrontLegs(ctx, scale);
-            
-            // Draw body shadow (only when not jumping, otherwise drawn separately above)
-            if (!this.isJumping) {
-                this.drawShadow(ctx, scale);
-            }
             
             // Draw body
             this.drawBody(ctx, scale);
@@ -235,24 +258,11 @@ class Frog extends Item {
         }, { x: this.x, y: this.y });
     }
 
-    drawShadow(ctx, scale) {
-        const s = this.frogSize;
-        ctx.save();
-        ctx.translate(s * 0.05, s * 0.08);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        
-        // Body shadow
-        ctx.beginPath();
-        ctx.ellipse(0, s * 0.1, s * 0.75, s * 0.9, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
-
     drawBody(ctx, scale) {
         const s = this.frogSize;
         const { h, s: sat, l } = this.baseColor;
         
-        // Main body - egg/teardrop shape (wider at bottom)
+        // Main body gradient
         const gradient = ctx.createRadialGradient(
             -s * 0.15, -s * 0.2, 0,
             0, s * 0.1, s * 1.1
@@ -262,61 +272,22 @@ class Frog extends Item {
         gradient.addColorStop(1, `hsl(${h}, ${sat}%, ${l - 15}%)`);
         
         ctx.fillStyle = gradient;
-        
-        // Draw body as custom shape - not a circle!
-        ctx.beginPath();
-        
-        // Start at top (head area) and draw clockwise
-        // Head is narrower, body widens toward bottom
-        const headWidth = s * 0.55;
-        const bodyWidth = s * 0.75;
-        const bodyHeight = s * 0.95;
-        
-        // Top of head
-        ctx.moveTo(0, -bodyHeight * 0.45);
-        
-        // Right side of head curving to body
-        ctx.bezierCurveTo(
-            headWidth * 0.8, -bodyHeight * 0.4,  // control 1
-            bodyWidth, -bodyHeight * 0.1,         // control 2
-            bodyWidth, bodyHeight * 0.15          // end point
-        );
-        
-        // Right side of body bulging out
-        ctx.bezierCurveTo(
-            bodyWidth * 1.05, bodyHeight * 0.4,
-            bodyWidth * 0.9, bodyHeight * 0.7,
-            bodyWidth * 0.5, bodyHeight * 0.85
-        );
-        
-        // Bottom curve
-        ctx.bezierCurveTo(
-            bodyWidth * 0.2, bodyHeight * 0.95,
-            -bodyWidth * 0.2, bodyHeight * 0.95,
-            -bodyWidth * 0.5, bodyHeight * 0.85
-        );
-        
-        // Left side of body
-        ctx.bezierCurveTo(
-            -bodyWidth * 0.9, bodyHeight * 0.7,
-            -bodyWidth * 1.05, bodyHeight * 0.4,
-            -bodyWidth, bodyHeight * 0.15
-        );
-        
-        // Left side up to head
-        ctx.bezierCurveTo(
-            -bodyWidth, -bodyHeight * 0.1,
-            -headWidth * 0.8, -bodyHeight * 0.4,
-            0, -bodyHeight * 0.45
-        );
-        
-        ctx.closePath();
-        ctx.fill();
-        
-        // Subtle outline
         ctx.strokeStyle = `hsla(${h}, ${sat}%, ${l - 25}%, 0.3)`;
         ctx.lineWidth = scale * 1.5;
-        ctx.stroke();
+
+        // Use SVG path
+        ctx.save();
+        // Scale to fit frogSize. SVG height is ~87 units. 
+        // We want body height to be about 1.54 * s (70% of previous 2.2)
+        const svgScale = (s * 1.54) / 87; 
+        ctx.scale(svgScale, -svgScale); // Flip Y to match SVG transform
+        // Translate to center the shape (BBox center is roughly 252.5, 80)
+        ctx.translate(-252.5, -80);
+        
+        const bodyPath = new Path2D(FROG_BODY_PATH);
+        ctx.fill(bodyPath);
+        ctx.stroke(bodyPath);
+        ctx.restore();
     }
 
     drawPattern(ctx, scale) {
@@ -325,20 +296,18 @@ class Frog extends Item {
         
         ctx.save();
         
-        // Clip to body shape
-        ctx.beginPath();
-        const headWidth = s * 0.55;
-        const bodyWidth = s * 0.72;
-        const bodyHeight = s * 0.92;
+        // Create clipping path using the same transform as body
+        const svgScale = (s * 1.54) / 87;
+        ctx.scale(svgScale, -svgScale);
+        ctx.translate(-252.5, -80);
+        const bodyPath = new Path2D(FROG_BODY_PATH);
         
-        ctx.moveTo(0, -bodyHeight * 0.45);
-        ctx.bezierCurveTo(headWidth * 0.8, -bodyHeight * 0.4, bodyWidth, -bodyHeight * 0.1, bodyWidth, bodyHeight * 0.15);
-        ctx.bezierCurveTo(bodyWidth * 1.05, bodyHeight * 0.4, bodyWidth * 0.9, bodyHeight * 0.7, bodyWidth * 0.5, bodyHeight * 0.85);
-        ctx.bezierCurveTo(bodyWidth * 0.2, bodyHeight * 0.95, -bodyWidth * 0.2, bodyHeight * 0.95, -bodyWidth * 0.5, bodyHeight * 0.85);
-        ctx.bezierCurveTo(-bodyWidth * 0.9, bodyHeight * 0.7, -bodyWidth * 1.05, bodyHeight * 0.4, -bodyWidth, bodyHeight * 0.15);
-        ctx.bezierCurveTo(-bodyWidth, -bodyHeight * 0.1, -headWidth * 0.8, -bodyHeight * 0.4, 0, -bodyHeight * 0.45);
-        ctx.closePath();
-        ctx.clip();
+        // Apply clip
+        ctx.clip(bodyPath);
+        
+        // Undo transform for pattern drawing so pattern logic stays simple
+        ctx.translate(252.5, 80);
+        ctx.scale(1/svgScale, -1/svgScale);
         
         ctx.fillStyle = `hsl(${h}, ${sat}%, ${l}%)`;
         
@@ -433,30 +402,56 @@ class Frog extends Item {
         const { h, s: sat, l } = this.baseColor;
         const legColor = `hsl(${h}, ${sat}%, ${l - 5}%)`;
         
+        // SVG scale factor (same as body)
+        const svgScale = (s * 1.54) / 87;
+        // Body center in SVG coords
+        const bodyCenterX = 182.5;
+        const bodyCenterY = -76.2;
+        
         ctx.fillStyle = legColor;
         ctx.strokeStyle = `hsla(${h}, ${sat}%, ${l - 25}%, 0.3)`;
         ctx.lineWidth = scale * 1.5;
         
-        for (const side of [-1, 1]) {
-            ctx.save();
-            ctx.scale(side, 1);
-            
-            // Thigh - big rounded shape bulging out to the side
-            ctx.beginPath();
-            ctx.ellipse(s * 0.55, s * 0.45, s * 0.32, s * 0.22, 0.4, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Knee bump - where leg bends
-            ctx.beginPath();
-            ctx.ellipse(s * 0.8, s * 0.55, s * 0.15, s * 0.12, 0.3, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Foot - to the side of body, toes point FORWARD (toward head)
-            this.drawWebbedFoot(ctx, s * 0.95, s * 0.6, s * 0.22, Math.PI, scale, legColor);
-            
-            ctx.restore();
-        }
+        // Back leg thighs from SVG: ellipses at (219.14, -64.16) and (146.23, -64.16)
+        // rx=8.838539, ry=10.164585
+        const backThighRx = 8.84 * svgScale;
+        const backThighRy = 10.16 * svgScale;
+        const backThighX = (219.14 - bodyCenterX) * svgScale;
+        const backThighY = (-64.16 - bodyCenterY) * svgScale;
+        
+        // Right back thigh
+        ctx.beginPath();
+        ctx.ellipse(backThighX, backThighY, backThighRx, backThighRy, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Left back thigh
+        ctx.beginPath();
+        ctx.ellipse(-backThighX, backThighY, backThighRx, backThighRy, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Back feet - positioned relative to thighs, extending outward and slightly forward
+        const footPath = new Path2D(FROG_FOOT_PATH);
+        const footScale = svgScale;
+        
+        // Back right foot - extends from thigh outward and forward (rotated 180 degrees)
+        ctx.save();
+        ctx.translate(backThighX + backThighRx * 1.0, backThighY - backThighRy * 0.8);
+        ctx.rotate(Math.PI);
+        ctx.transform(0.951483 * footScale, -0.3077 * footScale, -0.3077 * footScale, 0.951483 * footScale, 0, 0);
+        ctx.translate(-135, -50);
+        ctx.fill(footPath);
+        ctx.restore();
+        
+        // Back left foot - extends from thigh outward and forward (rotated 180 degrees)
+        ctx.save();
+        ctx.translate(-backThighX - backThighRx * 1.0, backThighY - backThighRy * 0.8);
+        ctx.rotate(Math.PI);
+        ctx.transform(-0.951483 * footScale, -0.3077 * footScale, 0.3077 * footScale, 0.951483 * footScale, 0, 0);
+        ctx.translate(-135, -50);
+        ctx.fill(footPath);
+        ctx.restore();
     }
 
     drawFrontLegs(ctx, scale) {
@@ -464,156 +459,76 @@ class Frog extends Item {
         const { h, s: sat, l } = this.baseColor;
         const legColor = `hsl(${h}, ${sat}%, ${l - 3}%)`;
         
+        // SVG scale factor (same as body)
+        const svgScale = (s * 1.54) / 87;
+        // Body center in SVG coords
+        const bodyCenterX = 182.5;
+        const bodyCenterY = -76.2;
+        
         ctx.fillStyle = legColor;
         ctx.strokeStyle = `hsla(${h}, ${sat}%, ${l - 25}%, 0.4)`;
         ctx.lineWidth = scale * 1.5;
         
-        // Front legs - go OUT to the sides, then hands reach FORWARD
-        for (const side of [-1, 1]) {
-            ctx.save();
-            ctx.scale(side, 1);
-            
-            // Upper arm - goes straight out to the side
-            ctx.beginPath();
-            ctx.moveTo(s * 0.45, -s * 0.05);
-            ctx.quadraticCurveTo(s * 0.65, -s * 0.1, s * 0.8, -s * 0.05);
-            ctx.quadraticCurveTo(s * 0.85, s * 0.05, s * 0.75, s * 0.1);
-            ctx.quadraticCurveTo(s * 0.6, s * 0.08, s * 0.45, s * 0.05);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            
-            // Forearm - bends forward (toward negative Y / head direction)
-            ctx.beginPath();
-            ctx.moveTo(s * 0.75, -s * 0.02);
-            ctx.quadraticCurveTo(s * 0.85, -s * 0.15, s * 0.8, -s * 0.3);
-            ctx.quadraticCurveTo(s * 0.72, -s * 0.28, s * 0.68, -s * 0.1);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            
-            // Hand with fingers - at the end, pointing forward
-            this.drawHand(ctx, s * 0.78, -s * 0.35, s * 0.14, Math.PI, scale, legColor);
-            
-            ctx.restore();
-        }
-    }
-
-    drawWebbedFoot(ctx, x, y, size, rotation, scale, color) {
+        // Front leg thighs from SVG: ellipses at (211.59, -39.07) and (153.78, -38.63)
+        // rx=22, ry=11.5, with slight rotation (~0.17 rad)
+        const frontThighRx = 22 * svgScale;
+        const frontThighRy = 11.5 * svgScale;
+        const frontThighRightX = (211.59 - bodyCenterX) * svgScale;
+        const frontThighRightY = (-39.07 - bodyCenterY) * svgScale;
+        const frontThighLeftX = (153.78 - bodyCenterX) * svgScale;
+        const frontThighLeftY = (-38.63 - bodyCenterY) * svgScale;
+        
+        // Right front thigh (rotated slightly)
         ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(rotation);
-        
-        const { h, s: sat, l } = this.baseColor;
-        
-        ctx.fillStyle = color;
-        ctx.strokeStyle = `hsla(${h}, ${sat}%, ${l - 25}%, 0.3)`;
-        ctx.lineWidth = scale;
-        
-        // Toes spreading out
-        const toeAngles = [-0.6, -0.2, 0.2, 0.6];
-        const toeLengths = [0.7, 0.95, 0.95, 0.7];
-        
-        // Draw webbing first (behind toes)
-        ctx.fillStyle = `hsla(${h}, ${sat - 10}%, ${l + 5}%, 0.5)`;
+        ctx.translate(frontThighRightX, frontThighRightY);
+        ctx.rotate(-0.17);
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        for (let i = 0; i < toeAngles.length; i++) {
-            const angle = toeAngles[i];
-            const len = toeLengths[i] * size * 0.8;
-            ctx.lineTo(Math.sin(angle) * len, Math.cos(angle) * len);
-        }
-        ctx.closePath();
+        ctx.ellipse(0, 0, frontThighRx, frontThighRy, 0, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Draw toes on top
-        ctx.fillStyle = color;
-        for (let i = 0; i < toeAngles.length; i++) {
-            const angle = toeAngles[i];
-            const len = toeLengths[i] * size;
-            
-            // Toe as tapered line
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(Math.sin(angle) * len, Math.cos(angle) * len);
-            ctx.lineWidth = size * 0.22;
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = color;
-            ctx.stroke();
-            
-            // Round toe tip
-            ctx.beginPath();
-            ctx.arc(
-                Math.sin(angle) * len,
-                Math.cos(angle) * len,
-                size * 0.1,
-                0, Math.PI * 2
-            );
-            ctx.fill();
-        }
-        
+        ctx.stroke();
         ctx.restore();
-    }
-
-    drawHand(ctx, x, y, size, rotation, scale, color) {
+        
+        // Left front thigh (rotated slightly other way)
         ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(rotation);
-        
-        const { h, s: sat, l } = this.baseColor;
-        
-        ctx.fillStyle = color;
-        ctx.strokeStyle = `hsla(${h}, ${sat}%, ${l - 25}%, 0.4)`;
-        ctx.lineWidth = scale;
-        
-        // Fingers - 4 splayed out in a fan
-        const fingerAngles = [-0.7, -0.25, 0.25, 0.7];
-        const fingerLengths = [0.7, 0.9, 0.9, 0.7];
-        
-        for (let i = 0; i < fingerAngles.length; i++) {
-            const angle = fingerAngles[i];
-            const len = fingerLengths[i] * size;
-            
-            // Draw finger as tapered shape
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.quadraticCurveTo(
-                Math.sin(angle) * len * 0.5,
-                Math.cos(angle) * len * 0.5,
-                Math.sin(angle) * len,
-                Math.cos(angle) * len
-            );
-            ctx.lineWidth = size * 0.2;
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = color;
-            ctx.stroke();
-            
-            // Fingertip
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(
-                Math.sin(angle) * len,
-                Math.cos(angle) * len,
-                size * 0.12,
-                0, Math.PI * 2
-            );
-            ctx.fill();
-        }
-        
-        // Palm in center
-        ctx.fillStyle = color;
+        ctx.translate(frontThighLeftX, frontThighLeftY);
+        ctx.rotate(0.17);
         ctx.beginPath();
-        ctx.ellipse(0, size * 0.1, size * 0.25, size * 0.2, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, frontThighRx, frontThighRy, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
+        ctx.restore();
         
+        // Front feet (hands) - positioned relative to thighs, extending forward
+        const footPath = new Path2D(FROG_FOOT_PATH);
+        const footScale = svgScale;
+        
+        // Front right foot - extends forward from thigh (rotated 180 degrees)
+        ctx.save();
+        ctx.translate(frontThighRightX + frontThighRx * 1.0, frontThighRightY - frontThighRy * 0.8);
+        ctx.rotate(Math.PI);
+        ctx.transform(1 * footScale, 0, 0, 1 * footScale, 0, 0);
+        ctx.translate(-135, -50);
+        ctx.fill(footPath);
+        ctx.restore();
+        
+        // Front left foot - extends forward from thigh (rotated 180 degrees)
+        ctx.save();
+        ctx.translate(frontThighLeftX - frontThighRx * 1.0, frontThighLeftY - frontThighRy * 0.8);
+        ctx.rotate(Math.PI);
+        ctx.transform(-1 * footScale, 0, 0, 1 * footScale, 0, 0);
+        ctx.translate(-135, -50);
+        ctx.fill(footPath);
         ctx.restore();
     }
 
     drawEyes(ctx, scale) {
         const s = this.frogSize;
-        const eyeSpacing = s * 0.28;
-        const eyeY = -s * 0.28;
-        const eyeSize = s * 0.15;
+        // Derived from SVG: eye offset ~18.46 units, body height ~87
+        // Eye Y offset from center ~21.3 units, eye radius ~6.5
+        // With svgScale = (s * 1.54) / 87:
+        const eyeSpacing = s * 0.33;  // 18.46 * 1.54 / 87
+        const eyeY = -s * 0.38;       // 21.3 * 1.54 / 87
+        const eyeSize = s * 0.115;    // 6.5 * 1.54 / 87
         const { h, s: sat, l } = this.baseColor;
         
         // Draw eye bumps/ridges first (behind the actual eyes)
@@ -682,19 +597,24 @@ class Frog extends Item {
     drawNostrils(ctx, scale) {
         const s = this.frogSize;
         
-        // Two small nostril dots near the front of the head
+        // Derived from SVG: nostrils at ~9.6 units from center, ~38.4 units above body center
+        // rx=1.126, ry=1.689, tilted ~50° outward
+        // With svgScale = (s * 1.54) / 87:
+        const nostrilSpacing = s * 0.17;  // 9.6 * 1.54 / 87
+        const nostrilY = -s * 0.68;       // 38.4 * 1.54 / 87
+        const nostrilRx = s * 0.02;       // 1.126 * 1.54 / 87
+        const nostrilRy = s * 0.03;       // 1.689 * 1.54 / 87
+        
         ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         
-        const nostrilY = -s * 0.38;
-        const nostrilSpacing = s * 0.1;
-        const nostrilSize = s * 0.035;
-        
+        // Left nostril (tilted outward ~50°)
         ctx.beginPath();
-        ctx.ellipse(-nostrilSpacing, nostrilY, nostrilSize, nostrilSize * 0.8, 0, 0, Math.PI * 2);
+        ctx.ellipse(-nostrilSpacing, nostrilY, nostrilRx, nostrilRy, -0.87, 0, Math.PI * 2);
         ctx.fill();
         
+        // Right nostril (tilted outward ~50° other direction)
         ctx.beginPath();
-        ctx.ellipse(nostrilSpacing, nostrilY, nostrilSize, nostrilSize * 0.8, 0, 0, Math.PI * 2);
+        ctx.ellipse(nostrilSpacing, nostrilY, nostrilRx, nostrilRy, 0.87, 0, Math.PI * 2);
         ctx.fill();
     }
 }
