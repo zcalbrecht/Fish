@@ -33,6 +33,49 @@ class Frog extends Item {
         // Layer for draw order
         this.layer = 2.5; // Above lily pads
         
+        // Jump state
+        this.isJumping = false;
+        this.jumpProgress = 0;
+        this.jumpDuration = 0.4;
+        this.jumpStartX = 0;
+        this.jumpStartY = 0;
+        this.jumpTargetPad = null;
+        this.landingRotation = null; // Preserved rotation from jump landing
+        this.previousPad = null; // Track the pad we just came from
+    }
+
+    containsPoint(x, y) {
+        const dx = x - this.x;
+        const dy = y - this.y;
+        return Math.hypot(dx, dy) <= this.frogSize;
+    }
+
+    jumpTo(targetPad) {
+        if (this.isJumping || !targetPad) return;
+        
+        // Save current pad as previous before jumping
+        this.previousPad = this.parentPad;
+        
+        // Calculate distance to target
+        const targetX = targetPad.anchorX ?? targetPad.x;
+        const targetY = targetPad.anchorY ?? targetPad.y;
+        const distance = Math.hypot(targetX - this.x, targetY - this.y);
+        
+        // Scale duration with distance (base 0.2s + distance-based time)
+        // 2000 pixels per second
+        const baseDuration = 0.2;
+        const speed = 2000;
+        this.jumpDuration = baseDuration + (distance / speed);
+        
+        this.isJumping = true;
+        this.jumpProgress = 0;
+        this.jumpStartX = this.x;
+        this.jumpStartY = this.y;
+        this.jumpTargetPad = targetPad;
+        this.landingRotation = null; // Reset landing rotation for new jump
+        
+        // Detach from current pad
+        this.parentPad = null;
     }
 
     randomBaseColor() {
@@ -68,16 +111,46 @@ class Frog extends Item {
     update(dt, now) {
         this.updatePopIn(dt);
         
-        // Follow parent lily pad if attached
-        if (this.parentPad) {
-            // Use anchor position if available (after pad has updated)
+        // Handle jumping
+        if (this.isJumping) {
+            this.jumpProgress += dt / this.jumpDuration;
+            
+            // Interpolate position during jump
+            const targetX = this.jumpTargetPad.anchorX ?? this.jumpTargetPad.x;
+            const targetY = this.jumpTargetPad.anchorY ?? this.jumpTargetPad.y;
+            const t = this.jumpProgress;
+            this.x = this.jumpStartX + (targetX - this.jumpStartX) * t;
+            this.y = this.jumpStartY + (targetY - this.jumpStartY) * t;
+            
+            // Face toward target pad - calculate from start to target (not current to target)
+            // This ensures consistent angle throughout jump and at landing
+            const dx = targetX - this.jumpStartX;
+            const dy = targetY - this.jumpStartY;
+            const angleToTarget = Math.atan2(dy, dx);
+            this.rotation = angleToTarget + Math.PI / 2;
+            
+            if (this.jumpProgress >= 1) {
+                // Land on target pad - preserve the jump angle
+                this.jumpProgress = 1;
+                this.isJumping = false;
+                // Save the rotation (already calculated above) as landing rotation
+                this.landingRotation = this.rotation;
+                this.parentPad = this.jumpTargetPad;
+                this.jumpTargetPad = null;
+            }
+        } else if (this.parentPad) {
+            // Follow parent lily pad if attached
             const padX = this.parentPad.anchorX !== undefined ? this.parentPad.anchorX : this.parentPad.x;
             const padY = this.parentPad.anchorY !== undefined ? this.parentPad.anchorY : this.parentPad.y;
             this.x = padX;
             this.y = padY;
-            // Match lily pad rotation slightly
-            const padRotation = this.parentPad.currentRotation !== undefined ? this.parentPad.currentRotation : 0;
-            this.rotation = padRotation + this.baseRotation;
+            // Preserve landing rotation if set, otherwise use pad rotation
+            if (this.landingRotation !== null) {
+                this.rotation = this.landingRotation;
+            } else {
+                const padRotation = this.parentPad.currentRotation !== undefined ? this.parentPad.currentRotation : 0;
+                this.rotation = padRotation + this.baseRotation;
+            }
         }
         
         // Breathing animation
@@ -103,16 +176,46 @@ class Frog extends Item {
         const scale = ResponsiveScale.getScale();
         const breathScale = 1 + Math.sin(this.breathPhase) * 0.02;
         
+        // Calculate jump height (parabolic arc)
+        let jumpHeight = 0;
+        let jumpScale = 1;
+        if (this.isJumping) {
+            const t = this.jumpProgress;
+            // Parabolic arc: peaks at t=0.5
+            jumpHeight = Math.sin(t * Math.PI) * this.frogSize * 2;
+            // Squash at start/end, stretch at peak
+            const stretchFactor = Math.sin(t * Math.PI) * 0.15;
+            jumpScale = 1 + stretchFactor;
+        }
+        
+        // Draw shadow at ground level (separate from jumping frog)
+        if (this.isJumping) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+            ctx.scale(breathScale * (1 - jumpHeight / (this.frogSize * 4)), breathScale * (1 - jumpHeight / (this.frogSize * 4)));
+            ctx.globalAlpha = 0.3 - (jumpHeight / (this.frogSize * 4));
+            this.drawShadow(ctx, scale);
+            ctx.restore();
+        }
+        
         this.withTransform(ctx, () => {
             ctx.rotate(this.rotation);
-            ctx.scale(breathScale, breathScale);
+            ctx.scale(breathScale * jumpScale, breathScale * jumpScale);
+            
+            // Offset upward for jump height
+            if (jumpHeight > 0) {
+                ctx.translate(0, -jumpHeight);
+            }
             
             // Draw all legs first (behind body)
             this.drawBackLegs(ctx, scale);
             this.drawFrontLegs(ctx, scale);
             
-            // Draw body shadow
-            this.drawShadow(ctx, scale);
+            // Draw body shadow (only when not jumping, otherwise drawn separately above)
+            if (!this.isJumping) {
+                this.drawShadow(ctx, scale);
+            }
             
             // Draw body
             this.drawBody(ctx, scale);
