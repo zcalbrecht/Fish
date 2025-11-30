@@ -58,6 +58,10 @@ function init() {
 
     const handleStart = (e) => {
         const coords = getEventCoords(e);
+        // Check for frog click first
+        if (handleFrogClick(coords.x, coords.y)) {
+            return;
+        }
         if (beginSurfaceItemDrag(coords.x, coords.y)) {
             return;
         }
@@ -472,4 +476,55 @@ function findDuckweedNeighbors(source, radius) {
         }
     }
     return neighbors;
+}
+
+function handleFrogClick(x, y) {
+    // Find clicked frog
+    for (const item of surfaceItems) {
+        if (!(item instanceof Frog)) continue;
+        if (!item.containsPoint(x, y)) continue;
+        if (item.isJumping) continue;
+        
+        // Found a frog - find closest unoccupied pad (exclude current and previous pad)
+        const targetPad = findClosestUnoccupiedPad(item.x, item.y, item.parentPad, item.previousPad);
+        if (targetPad) {
+            item.jumpTo(targetPad);
+            ripples.push(new Ripple(item.x, item.y));
+            return true;
+        }
+    }
+    return false;
+}
+
+function findClosestUnoccupiedPad(fromX, fromY, excludePad, previousPad) {
+    // Get all frogs to check occupancy
+    const frogs = surfaceItems.filter(item => item instanceof Frog);
+    const occupiedPads = new Set(frogs.map(f => f.parentPad).filter(p => p));
+    
+    // Also exclude pads that are jump targets
+    for (const frog of frogs) {
+        if (frog.jumpTargetPad) {
+            occupiedPads.add(frog.jumpTargetPad);
+        }
+    }
+    
+    let closestPad = null;
+    let closestDist = Infinity;
+    
+    for (const item of surfaceItems) {
+        // Only consider LilyPad instances, explicitly exclude Flowers
+        if (!(item instanceof LilyPad)) continue;
+        if (typeof Flower !== "undefined" && item instanceof Flower) continue;
+        if (item === excludePad) continue;
+        if (item === previousPad) continue; // Don't jump back to previous pad
+        if (occupiedPads.has(item)) continue;
+        
+        const dist = Math.hypot(item.x - fromX, item.y - fromY);
+        if (dist < closestDist) {
+            closestDist = dist;
+            closestPad = item;
+        }
+    }
+    
+    return closestPad;
 }
