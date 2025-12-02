@@ -48,10 +48,26 @@ class Duckweed extends SurfaceItem {
         this.withTransform(
             ctx,
             () => {
+                // Draw shadow (only when plant is visible)
+                if (this.popInScale > 0) {
+                    const shadowOffset = ResponsiveScale.scaleValue(12);
+                    const shadowOpacity = 0.4 * this.popInScale;
+                    ctx.shadowColor = `rgba(18, 35, 75, ${shadowOpacity})`;
+                    ctx.shadowBlur = ResponsiveScale.scaleValue(8);
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = shadowOffset;
+                }
+                
                 ctx.fillStyle = this.fillColor;
                 ctx.beginPath();
                 ctx.ellipse(0, 0, this.size, this.size * this.aspect, 0, 0, Math.PI * 2);
                 ctx.fill();
+
+                // Reset shadow properties
+                ctx.shadowColor = "transparent";
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
 
                 ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
                 ctx.lineWidth = 0.6 * ResponsiveScale.getScale();

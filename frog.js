@@ -237,8 +237,8 @@ class Frog extends Item {
             }
             
             // Draw all legs first (behind body)
-            this.drawBackLegs(ctx, scale);
             this.drawFrontLegs(ctx, scale);
+            this.drawBackLegs(ctx, scale);
             
             // Draw body
             this.drawBody(ctx, scale);
@@ -397,7 +397,7 @@ class Frog extends Item {
         ctx.fill();
     }
 
-    drawBackLegs(ctx, scale) {
+    drawFrontLegs(ctx, scale) {
         const s = this.frogSize;
         const { h, s: sat, l } = this.baseColor;
         const legColor = `hsl(${h}, ${sat}%, ${l - 5}%)`;
@@ -412,49 +412,99 @@ class Frog extends Item {
         ctx.strokeStyle = `hsla(${h}, ${sat}%, ${l - 25}%, 0.3)`;
         ctx.lineWidth = scale * 1.5;
         
-        // Back leg thighs from SVG: ellipses at (219.14, -64.16) and (146.23, -64.16)
+        // Front leg thighs from SVG: ellipses at (219.14, -64.16) and (146.23, -64.16)
         // rx=8.838539, ry=10.164585
-        const backThighRx = 8.84 * svgScale;
-        const backThighRy = 10.16 * svgScale;
-        const backThighX = (219.14 - bodyCenterX) * svgScale;
-        const backThighY = (-64.16 - bodyCenterY) * svgScale;
+        const frontThighRx = 8.84 * svgScale;
+        const frontThighRy = 10.16 * svgScale;
+        const frontThighX = (219.14 - bodyCenterX) * svgScale;
+        const frontThighY = (-64.16 - bodyCenterY) * svgScale;
         
-        // Right back thigh
-        ctx.beginPath();
-        ctx.ellipse(backThighX, backThighY, backThighRx, backThighRy, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Left back thigh
-        ctx.beginPath();
-        ctx.ellipse(-backThighX, backThighY, backThighRx, backThighRy, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Back feet - positioned relative to thighs, extending outward and slightly forward
-        const footPath = new Path2D(FROG_FOOT_PATH);
-        const footScale = svgScale;
-        
-        // Back right foot - extends from thigh outward and forward (rotated 180 degrees)
-        ctx.save();
-        ctx.translate(backThighX + backThighRx * 1.0, backThighY - backThighRy * 0.8);
-        ctx.rotate(Math.PI);
-        ctx.transform(0.951483 * footScale, -0.3077 * footScale, -0.3077 * footScale, 0.951483 * footScale, 0, 0);
-        ctx.translate(-135, -50);
-        ctx.fill(footPath);
-        ctx.restore();
-        
-        // Back left foot - extends from thigh outward and forward (rotated 180 degrees)
-        ctx.save();
-        ctx.translate(-backThighX - backThighRx * 1.0, backThighY - backThighRy * 0.8);
-        ctx.rotate(Math.PI);
-        ctx.transform(-0.951483 * footScale, -0.3077 * footScale, 0.3077 * footScale, 0.951483 * footScale, 0, 0);
-        ctx.translate(-135, -50);
-        ctx.fill(footPath);
-        ctx.restore();
+        if (this.isJumping) {
+            // JUMPING POSE: Front legs on sides of body, reaching FORWARD
+            // Thighs positioned at sides (like normal) but angled forward
+            const jumpThighY = frontThighY - s * 0.35; // Further forward
+            const jumpThighX = frontThighX; // Keep side position
+            
+            // Right front thigh - at side, angled forward
+            ctx.save();
+            ctx.translate(jumpThighX, jumpThighY);
+            ctx.rotate(-0.4); // Angle forward
+            ctx.beginPath();
+            ctx.ellipse(0, 0, frontThighRx, frontThighRy, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+            
+            // Left front thigh - at side, angled forward
+            ctx.save();
+            ctx.translate(-jumpThighX, jumpThighY);
+            ctx.rotate(0.4); // Angle forward
+            ctx.beginPath();
+            ctx.ellipse(0, 0, frontThighRx, frontThighRy, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+            
+            // Front feet - outstretched forward from sides
+            const footPath = new Path2D(FROG_FOOT_PATH);
+            const footScale = svgScale;
+            
+            // Front right foot - forward from side, pointing forward
+            ctx.save();
+            ctx.translate(jumpThighX + frontThighRx * 0.3, jumpThighY - frontThighRy * 1.2);
+            ctx.rotate(Math.PI * 0.5); // Point forward (up)
+            ctx.transform(1 * footScale, 0, 0, 1 * footScale, 0, 0);
+            ctx.translate(-135, -50);
+            ctx.fill(footPath);
+            ctx.restore();
+            
+            // Front left foot - forward from side, pointing forward
+            ctx.save();
+            ctx.translate(-jumpThighX - frontThighRx * 0.3, jumpThighY - frontThighRy * 1.2);
+            ctx.rotate(Math.PI * 0.5); // Point forward (up)
+            ctx.transform(1 * footScale, 0, 0, 1 * footScale, 0, 0);
+            ctx.translate(-135, -50);
+            ctx.fill(footPath);
+            ctx.restore();
+        } else {
+            // NORMAL POSE: Front legs to the sides
+            // Right front thigh
+            ctx.beginPath();
+            ctx.ellipse(frontThighX, frontThighY, frontThighRx, frontThighRy, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Left front thigh
+            ctx.beginPath();
+            ctx.ellipse(-frontThighX, frontThighY, frontThighRx, frontThighRy, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Front feet - positioned relative to thighs, extending outward and slightly forward
+            const footPath = new Path2D(FROG_FOOT_PATH);
+            const footScale = svgScale;
+            
+            // Front right foot - extends from thigh outward and forward (rotated 180 degrees)
+            ctx.save();
+            ctx.translate(frontThighX + frontThighRx * 1.0, frontThighY - frontThighRy * 0.8);
+            ctx.rotate(Math.PI);
+            ctx.transform(0.951483 * footScale, -0.3077 * footScale, -0.3077 * footScale, 0.951483 * footScale, 0, 0);
+            ctx.translate(-135, -50);
+            ctx.fill(footPath);
+            ctx.restore();
+            
+            // Front left foot - extends from thigh outward and forward (rotated 180 degrees)
+            ctx.save();
+            ctx.translate(-frontThighX - frontThighRx * 1.0, frontThighY - frontThighRy * 0.8);
+            ctx.rotate(Math.PI);
+            ctx.transform(-0.951483 * footScale, -0.3077 * footScale, 0.3077 * footScale, 0.951483 * footScale, 0, 0);
+            ctx.translate(-135, -50);
+            ctx.fill(footPath);
+            ctx.restore();
+        }
     }
 
-    drawFrontLegs(ctx, scale) {
+    drawBackLegs(ctx, scale) {
         const s = this.frogSize;
         const { h, s: sat, l } = this.baseColor;
         const legColor = `hsl(${h}, ${sat}%, ${l - 3}%)`;
@@ -469,56 +519,106 @@ class Frog extends Item {
         ctx.strokeStyle = `hsla(${h}, ${sat}%, ${l - 25}%, 0.4)`;
         ctx.lineWidth = scale * 1.5;
         
-        // Front leg thighs from SVG: ellipses at (211.59, -39.07) and (153.78, -38.63)
+        // Back leg thighs from SVG: ellipses at (211.59, -39.07) and (153.78, -38.63)
         // rx=22, ry=11.5, with slight rotation (~0.17 rad)
-        const frontThighRx = 22 * svgScale;
-        const frontThighRy = 11.5 * svgScale;
-        const frontThighRightX = (211.59 - bodyCenterX) * svgScale;
-        const frontThighRightY = (-39.07 - bodyCenterY) * svgScale;
-        const frontThighLeftX = (153.78 - bodyCenterX) * svgScale;
-        const frontThighLeftY = (-38.63 - bodyCenterY) * svgScale;
+        const backThighRx = 22 * svgScale;
+        const backThighRy = 11.5 * svgScale;
+        const backThighRightX = (211.59 - bodyCenterX) * svgScale;
+        const backThighRightY = (-39.07 - bodyCenterY) * svgScale;
+        const backThighLeftX = (153.78 - bodyCenterX) * svgScale;
+        const backThighLeftY = (-38.63 - bodyCenterY) * svgScale;
         
-        // Right front thigh (rotated slightly)
-        ctx.save();
-        ctx.translate(frontThighRightX, frontThighRightY);
-        ctx.rotate(-0.17);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, frontThighRx, frontThighRy, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-        
-        // Left front thigh (rotated slightly other way)
-        ctx.save();
-        ctx.translate(frontThighLeftX, frontThighLeftY);
-        ctx.rotate(0.17);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, frontThighRx, frontThighRy, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-        
-        // Front feet (hands) - positioned relative to thighs, extending forward
-        const footPath = new Path2D(FROG_FOOT_PATH);
-        const footScale = svgScale;
-        
-        // Front right foot - extends forward from thigh (rotated 180 degrees)
-        ctx.save();
-        ctx.translate(frontThighRightX + frontThighRx * 1.0, frontThighRightY - frontThighRy * 0.8);
-        ctx.rotate(Math.PI);
-        ctx.transform(1 * footScale, 0, 0, 1 * footScale, 0, 0);
-        ctx.translate(-135, -50);
-        ctx.fill(footPath);
-        ctx.restore();
-        
-        // Front left foot - extends forward from thigh (rotated 180 degrees)
-        ctx.save();
-        ctx.translate(frontThighLeftX - frontThighRx * 1.0, frontThighLeftY - frontThighRy * 0.8);
-        ctx.rotate(Math.PI);
-        ctx.transform(-1 * footScale, 0, 0, 1 * footScale, 0, 0);
-        ctx.translate(-135, -50);
-        ctx.fill(footPath);
-        ctx.restore();
+        if (this.isJumping) {
+            // JUMPING POSE: Back legs stretched BACKWARD
+            // Thighs start from normal position but rotated backward
+            const jumpThighY = backThighRightY + s * 0.1; // Slightly back from normal
+            const jumpThighXOffset = s * 0.2; // Keep at sides
+            
+            // Right back thigh - at side, rotated backward
+            ctx.save();
+            ctx.translate(jumpThighXOffset, jumpThighY);
+            ctx.rotate(0.4); // Rotated backward
+            ctx.beginPath();
+            ctx.ellipse(0, 0, backThighRx, backThighRy, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+            
+            // Left back thigh - at side, rotated backward
+            ctx.save();
+            ctx.translate(-jumpThighXOffset, jumpThighY);
+            ctx.rotate(-0.4); // Rotated backward
+            ctx.beginPath();
+            ctx.ellipse(0, 0, backThighRx, backThighRy, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+            
+            // Back feet - stretched backward, pointing backward
+            const footPath = new Path2D(FROG_FOOT_PATH);
+            const footScale = svgScale;
+            
+            // Back right foot - extends backward from thigh, pointing backward
+            ctx.save();
+            ctx.translate(jumpThighXOffset + backThighRx * 0.5, jumpThighY + backThighRy * 1.3);
+            ctx.rotate(Math.PI * 1.5); // Point backward (down)
+            ctx.transform(1 * footScale, 0, 0, 1 * footScale, 0, 0);
+            ctx.translate(-135, -50);
+            ctx.fill(footPath);
+            ctx.restore();
+            
+            // Back left foot - extends backward from thigh, pointing backward
+            ctx.save();
+            ctx.translate(-jumpThighXOffset - backThighRx * 0.5, jumpThighY + backThighRy * 1.3);
+            ctx.rotate(Math.PI * 1.5); // Point backward (down)
+            ctx.transform(1 * footScale, 0, 0, 1 * footScale, 0, 0);
+            ctx.translate(-135, -50);
+            ctx.fill(footPath);
+            ctx.restore();
+        } else {
+            // NORMAL POSE: Back legs in normal position
+            // Right back thigh (rotated slightly)
+            ctx.save();
+            ctx.translate(backThighRightX, backThighRightY);
+            ctx.rotate(-0.17);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, backThighRx, backThighRy, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+            
+            // Left back thigh (rotated slightly other way)
+            ctx.save();
+            ctx.translate(backThighLeftX, backThighLeftY);
+            ctx.rotate(0.17);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, backThighRx, backThighRy, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+            
+            // Back feet (hands) - positioned relative to thighs, extending forward
+            const footPath = new Path2D(FROG_FOOT_PATH);
+            const footScale = svgScale;
+            
+            // Back right foot - extends forward from thigh (rotated 180 degrees)
+            ctx.save();
+            ctx.translate(backThighRightX + backThighRx * 1.0, backThighRightY - backThighRy * 0.8);
+            ctx.rotate(Math.PI);
+            ctx.transform(1 * footScale, 0, 0, 1 * footScale, 0, 0);
+            ctx.translate(-135, -50);
+            ctx.fill(footPath);
+            ctx.restore();
+            
+            // Back left foot - extends forward from thigh (rotated 180 degrees)
+            ctx.save();
+            ctx.translate(backThighLeftX - backThighRx * 1.0, backThighLeftY - backThighRy * 0.8);
+            ctx.rotate(Math.PI);
+            ctx.transform(-1 * footScale, 0, 0, 1 * footScale, 0, 0);
+            ctx.translate(-135, -50);
+            ctx.fill(footPath);
+            ctx.restore();
+        }
     }
 
     drawEyes(ctx, scale) {
