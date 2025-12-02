@@ -63,6 +63,16 @@ class LilyPad extends SurfaceItem {
 
     draw(ctx) {
         this.withTransform(ctx, () => {
+            // Draw shadow (only when plant is visible)
+            if (this.popInScale > 0) {
+                const shadowOffset = ResponsiveScale.scaleValue(15);
+                const shadowOpacity = 0.4 * this.popInScale;
+                ctx.shadowColor = `rgba(18, 35, 75, ${shadowOpacity})`;
+                ctx.shadowBlur = ResponsiveScale.scaleValue(12);
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = shadowOffset;
+            }
+            
             ctx.fillStyle = this.color;
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
             ctx.lineWidth = 2 * ResponsiveScale.getScale();
@@ -76,6 +86,12 @@ class LilyPad extends SurfaceItem {
 
             ctx.fill();
             ctx.stroke();
+
+            // Reset shadow properties
+            ctx.shadowColor = "transparent";
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
 
             // Add some veins
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
