@@ -485,8 +485,19 @@ function handleFrogClick(x, y) {
         if (!item.containsPoint(x, y)) continue;
         if (item.isJumping) continue;
         
-        // Found a frog - find closest unoccupied pad (exclude current and previous pad)
-        const targetPad = findClosestUnoccupiedPad(item.x, item.y, item.parentPad, item.previousPad);
+        // Found a frog - find closest unoccupied pad (exclude current and previous pad, and pads smaller than frog)
+        let targetPad = findClosestUnoccupiedPad(item.x, item.y, item.parentPad, item.previousPad, item.frogSize);
+        
+        // If no valid pad found, allow jumping back to previous pad as fallback
+        if (!targetPad && item.previousPad) {
+            // Check if previous pad is large enough and not occupied
+            const frogs = surfaceItems.filter(f => f instanceof Frog);
+            const isOccupied = frogs.some(f => f.parentPad === item.previousPad || f.jumpTargetPad === item.previousPad);
+            if (!isOccupied && item.previousPad.size >= item.frogSize * 1.2) {
+                targetPad = item.previousPad;
+            }
+        }
+        
         if (targetPad) {
             item.jumpTo(targetPad);
             ripples.push(new Ripple(item.x, item.y));
@@ -496,7 +507,7 @@ function handleFrogClick(x, y) {
     return false;
 }
 
-function findClosestUnoccupiedPad(fromX, fromY, excludePad, previousPad) {
+function findClosestUnoccupiedPad(fromX, fromY, excludePad, previousPad, minPadSize) {
     // Get all frogs to check occupancy
     const frogs = surfaceItems.filter(item => item instanceof Frog);
     const occupiedPads = new Set(frogs.map(f => f.parentPad).filter(p => p));
@@ -518,6 +529,9 @@ function findClosestUnoccupiedPad(fromX, fromY, excludePad, previousPad) {
         if (item === excludePad) continue;
         if (item === previousPad) continue; // Don't jump back to previous pad
         if (occupiedPads.has(item)) continue;
+        
+        // Exclude pads that aren't at least 20% bigger than the frog
+        if (minPadSize && item.size < minPadSize * 1.2) continue;
         
         const dist = Math.hypot(item.x - fromX, item.y - fromY);
         if (dist < closestDist) {

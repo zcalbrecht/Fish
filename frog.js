@@ -193,40 +193,6 @@ class Frog extends Item {
             jumpScale = 1 + stretchFactor;
         }
         
-        // Draw blurry drop shadow first (at ground level)
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
-        
-        // Use filter for blur if available, otherwise use shadowBlur
-        if (ctx.filter !== undefined) {
-            ctx.filter = `blur(${scale * 12}px)`;
-        } else {
-            ctx.shadowBlur = scale * 20;
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        }
-        
-        ctx.shadowOffsetX = scale * 3;
-        ctx.shadowOffsetY = scale * 4;
-        
-        // Draw a larger ellipse for the shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-        ctx.beginPath();
-        const shadowSize = this.frogSize * 1.2;
-        ctx.ellipse(scale * 3, scale * 4, shadowSize, shadowSize * 0.7, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Draw additional blurred layers for more blur effect
-        if (ctx.filter === undefined) {
-            ctx.shadowBlur = scale * 15;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-            ctx.beginPath();
-            ctx.ellipse(scale * 3, scale * 4, shadowSize * 1.1, shadowSize * 0.75, 0, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        ctx.restore();
-        
         this.withTransform(ctx, () => {
             ctx.rotate(this.rotation);
             ctx.scale(breathScale * jumpScale, breathScale * jumpScale);
