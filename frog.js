@@ -278,7 +278,6 @@ class Frog extends Item {
         ctx.fillStyle = `hsl(${h}, ${sat}%, ${l}%)`;
         
         if (this.pattern === 'stripes') {
-            // Vertical stripes like Pocket Frogs orange frog
             const stripeCount = 5;
             const stripeWidth = s * 0.12;
             

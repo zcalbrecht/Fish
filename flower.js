@@ -6,10 +6,8 @@ class Flower extends LilyPad {
         this.collisionScale = 0.9; // Allow closer overlap
         this.isFlower = true;
         this.notchWidth = 0; // No notch
-        this.hasFlower = true; // Always has visual flower parts
+        this.hasFlower = true;
         
-        // Initialize flower-specific visuals immediately
-        // (Logic taken from LilyPad constructor/randomization)
         const isPink = Math.random() < 0.3;
         if (isPink) {
             this.flowerColor = `hsl(${300 + Math.random() * 40}, 80%, 70%)`;
@@ -28,12 +26,6 @@ class Flower extends LilyPad {
 
     draw(ctx) {
         this.withTransform(ctx, () => {
-            // Skip drawing the green pad base, just draw the flower
-            // But we need hit detection... actually the prompt implies
-            // it's a "flower instance" that moves and can be bumped.
-            // So it acts like a round object. We can draw a faint shadow or small base?
-            // Let's draw just the flower parts centered.
-            
             this.drawFlower(ctx);
         }, { x: this.anchorX, y: this.anchorY, angle: this.currentRotation });
     }

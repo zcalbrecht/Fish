@@ -4,19 +4,9 @@ class Bubble extends Effect {
         
         const scale = ResponsiveScale.getScale();
         
-        this.radius = 0; // Starts tiny
+        this.radius = 0;
         this.targetRadius = (2 + Math.random() * 5) * scale;
         
-        // Upward velocity (negative y) with some variation
-        // Since it's top down, "up" usually means towards surface. 
-        // But visually bubbles drift. If "up" is Z-axis, X/Y shouldn't move much except for current/drift.
-        // The user said "float toward the surface". In 2D top-down, surface is usually just "up" in Z-index, 
-        // or sometimes "up" in Y if it's a side view. But this is top down (lily pads).
-        // So "float to surface" implies they just grow and fade or pop.
-        // However, usually bubbles drift a bit in the current or due to momentum.
-        // I'll give them a slight drift opposite to movement if possible, or just random.
-        
-        // Let's stick to slight random drift.
         this.vx = (Math.random() - 0.5) * 10 * scale;
         this.vy = (Math.random() - 0.5) * 10 * scale;
         
@@ -56,12 +46,9 @@ class Bubble extends Effect {
         if (!this.active) return;
 
         ctx.save();
-        // Opacity increases as it gets closer to surface (life decreases)? 
-        // Or stays constant? Real bubbles are clear.
-        // Let's keep it semi-transparent.
         
-        const progress = 1 - (this.life / this.maxLife); // 0 to 1
-        const alpha = 0.3 + (progress * 0.3); // Get slightly more visible as they rise
+        const progress = 1 - (this.life / this.maxLife);
+        const alpha = 0.3 + (progress * 0.3);
         
         ctx.globalAlpha = alpha;
         ctx.strokeStyle = "rgba(200, 240, 255, 0.8)";

@@ -16,16 +16,10 @@ class Ripple extends Effect {
     }
 
     update(dt = 0.016) {
-        // Time-based animation: speed is in units per second
-        // Default dt assumes ~60fps if not provided
         this.radius += this.speed * dt;
         if ((this.radius - 120) >= this.maxRadius) {
             this.active = false;
         }
-    }
-
-    isFinished() {
-        return !this.active;
     }
 
 

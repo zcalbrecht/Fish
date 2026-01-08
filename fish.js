@@ -222,14 +222,12 @@ class Fish extends Item {
         this.fleeing = false;
         this.fleeTimer = 0;
 
-        // Bubble behavior
-        this.bubbleTimer = 5 + Math.random() * 15; // Initial delay longer
+        this.bubbleTimer = 5 + Math.random() * 15;
         this.bubbleBurstCount = 0;
 
-        // Initialize Whiskers if needed
         if (this.ornament === "whiskers") {
-            const minLen = this.length * 4; // half of 8-length
-            const maxLen = this.length * 10; // slightly bigger than current 8-length
+            const minLen = this.length * 4;
+            const maxLen = this.length * 10;
             const whiskerLen = minLen + Math.random() * (maxLen - minLen);
             const segmentCount = Math.max(
                 10,
@@ -305,10 +303,9 @@ class Fish extends Item {
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-        // Use instance turnSpeed
         let turnSpeed = this.turnSpeed;
         if (distToTarget < FISH_CONFIG.closeDistance) {
-            turnSpeed = FISH_CONFIG.turnSpeedClose; // Keep close turn speed constant or scale it too? Kept constant for stability
+            turnSpeed = FISH_CONFIG.turnSpeedClose;
         }
 
         if (Math.abs(angleDiff) > turnSpeed) {
