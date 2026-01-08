@@ -201,6 +201,7 @@ function init() {
             const frogSize = size * 0.65;
             const frog = new Frog(x, y, frogSize, { parentPad: pad });
             frog.popInDelay = pad.popInDelay + 0.25;
+            frog.onPassiveJump = handlePassiveFrogJump;
             surfaceItems.push(frog);
         }
 
@@ -476,6 +477,11 @@ function findDuckweedNeighbors(source, radius) {
         }
     }
     return neighbors;
+}
+
+function handlePassiveFrogJump(frog) {
+    // Simulate a click on the frog - uses exact same code path as user click
+    handleFrogClick(frog.x, frog.y);
 }
 
 function handleFrogClick(x, y) {

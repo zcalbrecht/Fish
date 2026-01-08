@@ -37,7 +37,11 @@ class Frog extends Item {
         
         // Layer for draw order
         this.layer = 2.5; // Above lily pads
-        
+
+        // Passive jump timer (5-15 seconds between jumps)
+        this.passiveJumpTimer = 5 + Math.random() * 10;
+        this.onPassiveJump = null; // Callback set externally
+
         // Jump state
         this.isJumping = false;
         this.jumpProgress = 0;
@@ -173,6 +177,17 @@ class Frog extends Item {
             } else {
                 this.isBlinking = false;
                 this.blinkTimer = 2 + Math.random() * 5;
+            }
+        }
+
+        // Passive jumping
+        if (!this.isJumping && this.parentPad) {
+            this.passiveJumpTimer -= dt;
+            if (this.passiveJumpTimer <= 0) {
+                this.passiveJumpTimer = 5 + Math.random() * 10;
+                if (this.onPassiveJump) {
+                    this.onPassiveJump(this);
+                }
             }
         }
     }
