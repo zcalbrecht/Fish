@@ -1,7 +1,7 @@
 class Duckweed extends SurfaceItem {
     constructor(x, y, size = 8) {
         super(x, y, size);
-        this.layer = 0; // Lowest z-level (default, but explicit for clarity)
+        this.layer = 0;
         this.baseAngle = Math.random() * Math.PI * 2;
         this.driftPhase = Math.random() * Math.PI * 2;
         this.driftSpeed = 0.7 + Math.random() * 0.6;

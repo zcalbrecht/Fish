@@ -11,10 +11,9 @@ class Item {
         this.targetScale = 1;
         this.popInDelay = 0; // Delay before popping in
         
-        // Spring physics for pop-in
         this.popInVelocity = 0;
-        this.popInStiffness = 100 + Math.random() * 50; // Reduced from 120+ for softer bounce
-        this.popInDamping = 14 + Math.random() * 4; // Increased from 8+ to reduce overshoot
+        this.popInStiffness = 100 + Math.random() * 50;
+        this.popInDamping = 14 + Math.random() * 4;
     }
 
     setPosition(x, y) {

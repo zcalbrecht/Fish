@@ -3,21 +3,15 @@ class Dragonfly extends Effect {
         super(0, 0);
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
-        // this.active is inherited and true by default
 
-        // Random size (scale factor)
-        // Base size is small, this multiplier makes them vary
         this.scale =
-            (1.6 + Math.random() * 1.4) * ResponsiveScale.getScale(); // 1.6x to 3.0x (Doubled from 0.8-1.5)
+            (1.6 + Math.random() * 1.4) * ResponsiveScale.getScale();
 
         // Random Color Hue
         this.hue = Math.floor(Math.random() * 360);
 
-        // Spawn position and velocity
-        // 0: Left, 1: Right, 2: Top, 3: Bottom
         const side = Math.floor(Math.random() * 4);
-        // Speed: Fast but viewable
-        const speed = 2 + Math.random() * 3; // 2 to 5 px/frame (Halved from 4-10)
+        const speed = 2 + Math.random() * 3;
 
         const padding = ResponsiveScale.scaleValue(100); // Spawn well outside
 
@@ -43,13 +37,8 @@ class Dragonfly extends Effect {
             this.vy = -speed;
         }
 
-        // Calculate angle based on velocity
         this.angle = Math.atan2(this.vy, this.vx);
         
-        // Shadow offset (simulates height)
-        // The higher the fly, the further the shadow?
-        // Let's say it's hovering 50-150 units above water.
-        // Assuming light source is somewhat overhead but angled.
         this.height = ResponsiveScale.scaleValue(50 + Math.random() * 100);
         this.shadowOffset = {
             x: this.height * 0.2, 
@@ -65,12 +54,9 @@ class Dragonfly extends Effect {
         // Update pop-in animation
         this.updatePopIn(dt);
 
-        // Move linear
         this.x += this.vx;
         this.y += this.vy;
 
-        // Jitter / Buzz removed for smoother flight
-        
         this.wingPhase += this.wingSpeed;
 
         // Check bounds
@@ -124,9 +110,7 @@ class Dragonfly extends Effect {
             return;
         }
 
-        // Vector Body using Random Hue
-        // Head
-        ctx.fillStyle = `hsl(${this.hue}, 40%, 50%)`; // Head (Reduced Saturation)
+        ctx.fillStyle = `hsl(${this.hue}, 40%, 50%)`;
         ctx.beginPath();
         ctx.arc(8, 0, 4, 0, Math.PI * 2);
         ctx.fill();
@@ -192,12 +176,11 @@ class Dragonfly extends Effect {
             ctx.fillStyle = 'rgba(0,0,0,0.2)';
             ctx.fill();
         } else {
-            // Vector Grid / Veins look?
-            ctx.strokeStyle = `hsla(${this.hue}, 40%, 80%, 0.2)`; // Less bright wings
+            ctx.strokeStyle = `hsla(${this.hue}, 40%, 80%, 0.2)`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
             
-            ctx.fillStyle = `hsla(${this.hue}, 40%, 50%, 0.1)`; // Very transparent body color
+            ctx.fillStyle = `hsla(${this.hue}, 40%, 50%, 0.1)`;
             ctx.fill();
         }
     }
