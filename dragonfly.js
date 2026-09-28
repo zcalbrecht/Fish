@@ -3,185 +3,113 @@ class Dragonfly extends Effect {
         super(0, 0);
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
-
-        this.scale =
-            (1.6 + Math.random() * 1.4) * ResponsiveScale.getScale();
-
-        // Random Color Hue
-        this.hue = Math.floor(Math.random() * 360);
-
+        this.scale = (1.6 + Math.random() * 1.4) * ResponsiveScale.getScale();
+        const hue = Math.floor(Math.random() * 360);
         const side = Math.floor(Math.random() * 4);
         const speed = 2 + Math.random() * 3;
+        const padding = ResponsiveScale.scaleValue(100);
 
-        const padding = ResponsiveScale.scaleValue(100); // Spawn well outside
-
-        if (side === 0) { // Left
-            this.x = -padding;
+        if (side < 2) {
+            this.x = side === 0 ? -padding : canvasWidth + padding;
             this.y = Math.random() * canvasHeight;
-            this.vx = speed;
-            this.vy = (Math.random() - 0.5) * speed * 0.5; // Slight angle
-        } else if (side === 1) { // Right
-            this.x = canvasWidth + padding;
-            this.y = Math.random() * canvasHeight;
-            this.vx = -speed;
+            this.vx = side === 0 ? speed : -speed;
             this.vy = (Math.random() - 0.5) * speed * 0.5;
-        } else if (side === 2) { // Top
+        } else {
             this.x = Math.random() * canvasWidth;
-            this.y = -padding;
+            this.y = side === 2 ? -padding : canvasHeight + padding;
             this.vx = (Math.random() - 0.5) * speed * 0.5;
-            this.vy = speed;
-        } else { // Bottom
-            this.x = Math.random() * canvasWidth;
-            this.y = canvasHeight + padding;
-            this.vx = (Math.random() - 0.5) * speed * 0.5;
-            this.vy = -speed;
+            this.vy = side === 2 ? speed : -speed;
         }
 
         this.angle = Math.atan2(this.vy, this.vx);
-        
-        this.height = ResponsiveScale.scaleValue(50 + Math.random() * 100);
-        this.shadowOffset = {
-            x: this.height * 0.2, 
-            y: this.height * 0.8 // Shadow falls mostly "down" the screen
-        };
-
-        // Wing animation
+        const height = ResponsiveScale.scaleValue(50 + Math.random() * 100);
+        this.shadowX = height * 0.2;
+        this.shadowY = height * 0.8;
         this.wingPhase = Math.random() * Math.PI * 2;
-        this.wingSpeed = 0.8 + Math.random() * 0.4; // Flapping speed
+        this.wingSpeed = 0.8 + Math.random() * 0.4;
+        this.bodyColor = `hsl(${hue}, 40%, 50%)`;
+        this.thoraxColor = `hsl(${hue}, 40%, 40%)`;
+        this.wingFill = `hsla(${hue}, 40%, 50%, 0.1)`;
+        this.wingStroke = `hsla(${hue}, 40%, 80%, 0.2)`;
+        this.frontWing = new Path2D();
+        this.frontWing.ellipse(14, 0, 14, 3, 0, 0, Math.PI * 2);
+        this.backWing = new Path2D();
+        this.backWing.ellipse(12, 0, 12, 2.5, 0, 0, Math.PI * 2);
+        this.head = new Path2D();
+        this.head.arc(8, 0, 4, 0, Math.PI * 2);
+        this.thorax = new Path2D();
+        this.thorax.ellipse(0, 0, 6, 4, 0, 0, Math.PI * 2);
+        this.segments = new Path2D();
+        for (let i = 0; i < 5; i++) {
+            const x = -10 - i * 6;
+            this.segments.moveTo(x + 1.5, 0);
+            this.segments.arc(x, 0, 1.5, 0, Math.PI * 2);
+        }
     }
 
     update(dt = 0.016) {
-        // Update pop-in animation
         this.updatePopIn(dt);
-
         this.x += this.vx;
         this.y += this.vy;
-
         this.wingPhase += this.wingSpeed;
-
-        // Check bounds
-        const margin = 200;
-        if (this.x < -margin || this.x > this.canvasWidth + margin ||
-            this.y < -margin || this.y > this.canvasHeight + margin) {
+        if (this.x < -200 || this.x > this.canvasWidth + 200 ||
+            this.y < -200 || this.y > this.canvasHeight + 200) {
             this.active = false;
         }
     }
 
     draw(ctx) {
-        if (!this.active) return;
-
-        // --- Draw Shadow ---
-        // Shadow is drawn on the water surface (offset position)
-        this.withTransform(ctx, () => {
-            // Shadow style: Blur and dark
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-            // Draw simplified shape for shadow
-            this.drawBody(ctx, true);
-            this.drawWings(ctx, true);
-        }, { 
-            x: this.x + this.shadowOffset.x, 
-            y: this.y + this.shadowOffset.y, 
-            angle: this.angle, 
-            scale: this.scale 
-        });
-
-        // --- Draw Dragonfly ---
-        this.withTransform(ctx, () => {
-            this.drawBody(ctx, false);
-            this.drawWings(ctx, false);
-        }, { 
-            x: this.x, 
-            y: this.y, 
-            angle: this.angle, 
-            scale: this.scale 
-        });
+        if (!this.active || this.popInScale <= 0) return;
+        const flap = Math.sin(this.wingPhase) * 0.2;
+        this.beginTransform(ctx, this.x + this.shadowX, this.y + this.shadowY, this.angle, this.scale);
+        this.drawBody(ctx, true);
+        this.drawWings(ctx, flap, true);
+        ctx.restore();
+        this.beginTransform(ctx, this.x, this.y, this.angle, this.scale);
+        this.drawBody(ctx, false);
+        this.drawWings(ctx, flap, false);
+        ctx.restore();
     }
 
-    drawBody(ctx, isShadow) {
-        if (isShadow) {
-            // Simple line for shadow body
+    drawBody(ctx, shadow) {
+        if (shadow) {
             ctx.beginPath();
             ctx.moveTo(10, 0);
             ctx.lineTo(-30, 0);
             ctx.lineWidth = 4;
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+            ctx.lineCap = "round";
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
             ctx.stroke();
             return;
         }
-
-        ctx.fillStyle = `hsl(${this.hue}, 40%, 50%)`;
-        ctx.beginPath();
-        ctx.arc(8, 0, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Thorax (Middle)
-        ctx.fillStyle = `hsl(${this.hue}, 40%, 40%)`; // Slightly darker
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 6, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Abdomen (Tail - Long segmented look)
-        ctx.strokeStyle = `hsl(${this.hue}, 40%, 50%)`;
+        ctx.fillStyle = this.bodyColor;
+        ctx.fill(this.head);
+        ctx.fillStyle = this.thoraxColor;
+        ctx.fill(this.thorax);
+        ctx.strokeStyle = this.bodyColor;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(-6, 0);
         ctx.lineTo(-40, 0);
         ctx.stroke();
-
-        // Little segmentation dots
-        ctx.fillStyle = `hsl(${this.hue}, 40%, 50%)`;
-        for(let i=0; i<5; i++) {
-            ctx.beginPath();
-            ctx.arc(-10 - i*6, 0, 1.5, 0, Math.PI*2);
-            ctx.fill();
-        }
+        ctx.fillStyle = this.bodyColor;
+        ctx.fill(this.segments);
     }
 
-    drawWings(ctx, isShadow) {
-        // Wing flap animation
-        // Wings oscillate angle
-        // Reduce flap amplitude around the 90 degree mark
-        const flap = Math.sin(this.wingPhase) * 0.2;
-
-        // Front Wings
-        // Perpendicular is roughly Math.PI/2 (90 deg)
-        // Slightly forward of perpendicular: PI/2 - 0.2
-        this.drawOneWingPair(ctx, 2, 0, 28, 6, Math.PI/2 - 0.2 + flap, isShadow);
-        
-        // Back Wings
-        // Slightly back of perpendicular: PI/2 + 0.2
-        this.drawOneWingPair(ctx, -2, 0, 24, 5, Math.PI/2 + 0.2 - flap, isShadow);
+    drawWings(ctx, flap, shadow) {
+        ctx.fillStyle = shadow ? "rgba(0, 0, 0, 0.2)" : this.wingFill;
+        ctx.strokeStyle = this.wingStroke;
+        ctx.lineWidth = 0.5;
+        this.drawWingPair(ctx, this.frontWing, 2, Math.PI / 2 - 0.2 + flap, shadow);
+        this.drawWingPair(ctx, this.backWing, -2, Math.PI / 2 + 0.2 - flap, shadow);
     }
 
-    drawOneWingPair(ctx, x, y, len, width, angleBase, isShadow) {
-        // Left Wing (Top side if facing Right)
-        this.withTransform(ctx, () => {
-            this.drawWingShape(ctx, len, width, isShadow);
-        }, { x, y, angle: -angleBase });
-
-        // Right Wing (Bottom side if facing Right)
-        this.withTransform(ctx, () => {
-            this.drawWingShape(ctx, len, width, isShadow);
-        }, { x, y, angle: angleBase });
-    }
-
-    drawWingShape(ctx, len, width, isShadow) {
-        ctx.beginPath();
-        // Teardrop / Ellipse shape
-        // Start at 0,0, go out to len along X axis
-        ctx.ellipse(len/2, 0, len/2, width/2, 0, 0, Math.PI*2);
-        
-        if (isShadow) {
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            ctx.fill();
-        } else {
-            ctx.strokeStyle = `hsla(${this.hue}, 40%, 80%, 0.2)`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-            
-            ctx.fillStyle = `hsla(${this.hue}, 40%, 50%, 0.1)`;
-            ctx.fill();
+    drawWingPair(ctx, path, x, angle, shadow) {
+        for (let side = -1; side <= 1; side += 2) {
+            this.beginTransform(ctx, x, 0, angle * side);
+            if (!shadow) ctx.stroke(path);
+            ctx.fill(path);
+            ctx.restore();
         }
     }
 }

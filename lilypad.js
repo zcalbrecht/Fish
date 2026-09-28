@@ -1,36 +1,37 @@
 class LilyPad extends SurfaceItem {
     constructor(x, y, size) {
         super(x, y, size);
-        this.layer = 1; // Third highest z-level
-        this.collisionScale = 0.9; // Allow closer overlap
+        this.layer = 1;
+        this.collisionScale = 0.9;
         this.angle = Math.random() * Math.PI * 2;
-        // Random shade of green
         this.color = `hsl(${100 + Math.random() * 40}, 60%, ${30 + Math.random() * 20}%)`;
-
-        // Random notch size (0.2 to 1.5 times the base 0.15 PI)
-        this.notchWidth = (0.1 + Math.random() * 1.6) * 0.14;
-
-        // Stem properties
+        const notchWidth = (0.1 + Math.random() * 1.6) * 0.14;
         this.stemPhase = Math.random() * Math.PI * 2;
-        const stemLength = ResponsiveScale.scaleValue(90 + Math.random() * 60);
-        const stemSegmentCount = 12 + Math.floor(Math.random() * 5);
         this.stem = new Stem({
-            length: stemLength,
-            segmentCount: stemSegmentCount,
+            length: ResponsiveScale.scaleValue(90 + Math.random() * 60),
+            segmentCount: 12 + Math.floor(Math.random() * 5),
             phase: this.stemPhase,
-            size: this.size,
+            size,
             anchor: { x, y },
         });
 
-        this.updateTransform(this.getNow());
+        const start = notchWidth * Math.PI;
+        const end = (2 - notchWidth) * Math.PI;
+        this.leaf = new Path2D();
+        this.leaf.arc(0, 0, size, start, end);
+        this.leaf.lineTo(0, 0);
+        this.leaf.closePath();
+        this.veins = new Path2D();
+        for (let i = 0; i < 5; i++) {
+            const angle = start + (i + 0.5) / 5 * (end - start);
+            this.veins.moveTo(0, 0);
+            this.veins.lineTo(Math.cos(angle) * size * 0.9, Math.sin(angle) * size * 0.9);
+        }
+        this.updateTransform(performance.now());
         this.stem.setAnchor(this.anchorX, this.anchorY);
     }
 
-    getNow() {
-        return typeof performance !== "undefined" ? performance.now() : Date.now();
-    }
-
-    update(dt, now = this.getNow()) {
+    update(dt, now = performance.now()) {
         this.updatePopIn(dt);
         this.integrateMomentum(dt);
         this.updateTransform(now);
@@ -39,79 +40,38 @@ class LilyPad extends SurfaceItem {
     }
 
     updateTransform(now) {
-        const wobbleTime = now / 5000;
-        const wobbleRadius = this.size * 0.16;
-        this.wobbleX = Math.sin(wobbleTime + this.stemPhase) * wobbleRadius;
-        this.wobbleY = Math.cos(wobbleTime * 1.3 + this.stemPhase) * wobbleRadius;
-
-        const rotationTime = now / 1000;
-        this.currentRotation =
-            this.angle + Math.sin(rotationTime * 1.2 + this.stemPhase) * 0.05;
-
-        this.anchorX = this.x + this.wobbleX;
-        this.anchorY = this.y + this.wobbleY;
+        const radius = this.size * 0.16;
+        this.anchorX = this.x + Math.sin(now / 5000 + this.stemPhase) * radius;
+        this.anchorY = this.y + Math.cos(now / 5000 * 1.3 + this.stemPhase) * radius;
+        this.currentRotation = this.angle + Math.sin(now / 1000 * 1.2 + this.stemPhase) * 0.05;
     }
 
     drawStem(ctx) {
-        ctx.save();
-        ctx.translate(this.anchorX, this.anchorY);
-        ctx.scale(this.popInScale, this.popInScale);
+        if (this.popInScale <= 0) return;
+        this.beginTransform(ctx, this.anchorX, this.anchorY);
         ctx.translate(-this.anchorX, -this.anchorY);
         this.stem.draw(ctx);
         ctx.restore();
     }
 
     draw(ctx) {
-        this.withTransform(ctx, () => {
-            // Draw shadow (only when plant is visible)
-            if (this.popInScale > 0) {
-                const shadowOffset = ResponsiveScale.scaleValue(15);
-                const shadowOpacity = 0.4 * this.popInScale;
-                ctx.shadowColor = `rgba(18, 35, 75, ${shadowOpacity})`;
-                ctx.shadowBlur = ResponsiveScale.scaleValue(12);
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = shadowOffset;
-            }
-            
-            ctx.fillStyle = this.color;
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.lineWidth = 2 * ResponsiveScale.getScale();
+        if (this.popInScale <= 0) return;
+        const scale = ResponsiveScale.getScale();
+        this.beginTransform(ctx, this.anchorX, this.anchorY, this.currentRotation);
+        ctx.shadowColor = `rgba(18, 35, 75, ${0.4 * this.popInScale})`;
+        ctx.shadowBlur = 12 * scale;
+        ctx.shadowOffsetY = 15 * scale;
+        ctx.fillStyle = this.color;
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
+        ctx.lineWidth = 2 * scale;
+        ctx.fill(this.leaf);
+        ctx.stroke(this.leaf);
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = ctx.shadowOffsetY = 0;
 
-            // Draw lily pad shape (circle with a wedge cut out)
-            ctx.beginPath();
-            // Start at the notch
-            ctx.arc(0, 0, this.size, this.notchWidth * Math.PI, (2 - this.notchWidth) * Math.PI);
-            ctx.lineTo(0, 0);
-            ctx.closePath();
-
-            ctx.fill();
-            ctx.stroke();
-
-            // Reset shadow properties
-            ctx.shadowColor = "transparent";
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-
-            // Add some veins
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.lineWidth = ResponsiveScale.getScale();
-
-            const startAngle = this.notchWidth * Math.PI;
-            const endAngle = (2 - this.notchWidth) * Math.PI;
-            const totalAngle = endAngle - startAngle;
-            const veinCount = 5;
-
-            for (let i = 0; i < veinCount; i++) {
-                const t = (i + 0.5) / veinCount;
-                const veinAngle = startAngle + t * totalAngle;
-                
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(Math.cos(veinAngle) * this.size * 0.9, Math.sin(veinAngle) * this.size * 0.9);
-                ctx.stroke();
-            }
-        }, { x: this.anchorX, y: this.anchorY, angle: this.currentRotation });
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+        ctx.lineWidth = scale;
+        ctx.stroke(this.veins);
+        ctx.restore();
     }
 }
-

@@ -1,349 +1,168 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+const scaleValue = value => ResponsiveScale.scaleValue(value);
 
-let fishes = [];
-let bubbles = [];
-let surfaceItems = [];
-let ripples = [];
-let dragonflies = [];
-let pond = null;
-let raft = null;
-
-let draggingItem = null;
-let dragOffsetX = 0;
-let dragOffsetY = 0;
-let lastFrameTime =
-    typeof performance !== "undefined" ? performance.now() : Date.now();
-let lastDragSampleTime = 0;
-let dragVelocityX = 0;
-let dragVelocityY = 0;
-const BASE_DUCKWEED_CLUSTER_RADIUS = 100;
-let duckweedDragGroup = null;
-const scaleValue = (value) => ResponsiveScale.scaleValue(value);
+let width, height, pond;
+let fishes = [], bubbles = [], surfaceItems = [], ripples = [], dragonflies = [];
+let drawOrder = [];
+let draggingItem = null, duckweedDragGroup = [];
+let pointerId = null;
+let dragOffsetX = 0, dragOffsetY = 0, dragVelocityX = 0, dragVelocityY = 0;
+let lastDragSampleTime = 0, lastFrameTime = performance.now(), dragonflyTimer = 0;
 
 function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
     ResponsiveScale.setScale(width, height);
-    if (pond) pond.resize(width, height);
-    positionRaft();
-}
-
-function positionRaft() {
-    if (!raft) return;
-    const marginX = raft.width * 0.5 + scaleValue(40);
-    const marginY = raft.height * 0.5 + scaleValue(60);
-    const targetX = Math.max(marginX, width - marginX);
-    const targetY = Math.max(marginY, height - marginY);
-    raft.setPosition(targetX, targetY);
+    pond?.resize(width, height);
 }
 
 function init() {
     pond = new Pond(window.innerWidth, window.innerHeight);
     resize();
     window.addEventListener("resize", resize);
+    window.addEventListener("blur", endSurfaceItemDrag);
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    canvas.addEventListener("pointermove", handlePointerMove);
+    canvas.addEventListener("pointerup", handlePointerUp);
+    canvas.addEventListener("pointercancel", handlePointerUp);
+    canvas.addEventListener("lostpointercapture", handlePointerUp);
 
-    // Helper to get coordinates from mouse or touch events
-    const getEventCoords = (e) => {
-        if (e.touches && e.touches.length > 0) {
-            return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        } else if (e.changedTouches && e.changedTouches.length > 0) {
-            return {
-                x: e.changedTouches[0].clientX,
-                y: e.changedTouches[0].clientY,
-            };
-        }
-        return { x: e.clientX, y: e.clientY };
-    };
-
-    const handleStart = (e) => {
-        const coords = getEventCoords(e);
-        // Check for frog click first
-        if (handleFrogClick(coords.x, coords.y)) {
-            return;
-        }
-        if (beginSurfaceItemDrag(coords.x, coords.y)) {
-            return;
-        }
-        for (const fish of fishes) {
-            fish.setTarget(coords.x, coords.y);
-        }
-        ripples.push(new Ripple(coords.x, coords.y));
-    };
-
-    const handleMove = (e) => {
-        if (!draggingItem) return;
-        e.preventDefault(); // Prevent scrolling on mobile
-        const coords = getEventCoords(e);
-        const now =
-            typeof performance !== "undefined" ? performance.now() : Date.now();
-        const dt = Math.max((now - lastDragSampleTime) / 1000, 0.001);
-        const prevX = draggingItem.x;
-        const prevY = draggingItem.y;
-        const nextX = coords.x + dragOffsetX;
-        const nextY = coords.y + dragOffsetY;
-        draggingItem.setPosition(nextX, nextY);
-        const deltaX = draggingItem.x - prevX;
-        const deltaY = draggingItem.y - prevY;
-        if (duckweedDragGroup && duckweedDragGroup.length) {
-            moveDuckweedGroup(deltaX, deltaY);
-        }
-        dragVelocityX = (draggingItem.x - prevX) / dt;
-        dragVelocityY = (draggingItem.y - prevY) / dt;
-        lastDragSampleTime = now;
-    };
-
-    // Mouse events
-    window.addEventListener("mousedown", handleStart);
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", endSurfaceItemDrag);
-    window.addEventListener("mouseleave", endSurfaceItemDrag);
-
-    // Touch events
-    window.addEventListener(
-        "touchstart",
-        (e) => {
-            e.preventDefault(); // Prevent default touch behavior
-            handleStart(e);
-        },
-        { passive: false }
-    );
-    window.addEventListener("touchmove", handleMove, { passive: false });
-    window.addEventListener("touchend", endSurfaceItemDrag);
-    window.addEventListener("touchcancel", endSurfaceItemDrag);
-
-    fishes = [];
-
-    // Shadow Fish
-    fishes.push(
-        new Fish(Math.random() * width, Math.random() * height, {
-            color: { h: 210, s: 120, l: 4 },
-            sizeScale: 0.6,
-            pattern: "silhouette",
-        })
-    );
-
-    fishes.push(
-        new Fish(Math.random() * width, Math.random() * height, {
-            color: { h: 210, s: 120, l: 4 },
-            sizeScale: 0.8,
-            pattern: "silhouette",
-        })
-    );
-
-    fishes.push(
-        new Fish(Math.random() * width, Math.random() * height, {
-            color: { h: 35, s: 90, l: 50 },
-        })
-    );
-
-    fishes.push(
-        new Fish(Math.random() * width, Math.random() * height, {
-            color: { h: 200, s: 10, l: 90 },
-        })
-    );
-
-    fishes.push(
-        new Fish(Math.random() * width, Math.random() * height, {
-            color: { h: 0, s: 0, l: 95 },
-            pattern: "spots",
-            patternColor: { h: 25, s: 90, l: 50 },
-        })
-    );
-
-    fishes.push(
-        new Fish(Math.random() * width, Math.random() * height, {
-            color: { h: 0, s: 0, l: 95 },
-            pattern: "tricolor",
-            patternColor: { h: 10, s: 90, l: 50 },
-            patternColor2: { h: 0, s: 0, l: 15 },
-        })
-    );
-
-    // // Spawn Random Fish(leave commented out for now)
-    //  for (let i = 0; i < 10; i++) {
-    //      fishes.push(new Fish(Math.random() * width, Math.random() * height));
-    //  }
+    fishes = [
+        {color: {h: 210, s: 120, l: 4}, sizeScale: 0.6, pattern: "silhouette"},
+        {color: {h: 210, s: 120, l: 4}, sizeScale: 0.8, pattern: "silhouette"},
+        {color: {h: 35, s: 90, l: 50}},
+        {color: {h: 200, s: 10, l: 90}},
+        {color: {h: 0, s: 0, l: 95}, pattern: "spots", patternColor: {h: 25, s: 90, l: 50}},
+        {color: {h: 0, s: 0, l: 95}, pattern: "tricolor", patternColor: {h: 10, s: 90, l: 50}, patternColor2: {h: 0, s: 0, l: 15}}
+    ].map(options => new Fish(Math.random() * width, Math.random() * height, options));
 
     surfaceItems = [];
-    const padCount = 5;
-    const flowerSpawnChance = 0.3;
-    const duckweedMargin = scaleValue(15);
-
-    for (let i = 0; i < padCount; i++) {
+    for (let i = 0; i < 5; i++) {
         const x = Math.random() * width;
         const y = Math.random() * height;
         const size = scaleValue(40 + Math.random() * 40);
-
         const pad = new LilyPad(x, y, size);
-        // Add delay: 0.1s per index
         pad.popInDelay = i * 0.1;
         surfaceItems.push(pad);
 
         if (Math.random() < 0.6) {
-            const clusterAngle = Math.random() * Math.PI * 2;
-            const clusterDistance = size * 0.6 + scaleValue(Math.random() * 20);
-            const clusterX = x + Math.cos(clusterAngle) * clusterDistance;
-            const clusterY = y + Math.sin(clusterAngle) * clusterDistance;
-            spawnDuckweedClusterAt(surfaceItems, clusterX, clusterY, {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = size * 0.6 + scaleValue(Math.random() * 20);
+            spawnDuckweedClusterAt(surfaceItems, x + Math.cos(angle) * distance, y + Math.sin(angle) * distance, {
                 radius: Math.max(scaleValue(15), size * 0.35),
                 leafMin: 3,
                 leafMax: 7,
                 baseDelay: pad.popInDelay + 0.15,
-                margin: duckweedMargin,
+                margin: scaleValue(15),
                 minSpacing: scaleValue(8),
-                attemptsPerLeaf: 4,
+                attemptsPerLeaf: 4
             });
         }
-
-        // Chance to spawn a frog sitting on the lily pad
         if (Math.random() < 0.25) {
-            const frogSize = size * 0.65;
-            const frog = new Frog(x, y, frogSize, { parentPad: pad });
+            const frog = new Frog(x, y, size * 0.65, {parentPad: pad});
             frog.popInDelay = pad.popInDelay + 0.25;
-            frog.onPassiveJump = handlePassiveFrogJump;
+            frog.onPassiveJump = jumpFrog;
             surfaceItems.push(frog);
         }
-
-        // Slightly boosted chance to spawn a flower buddy nearby
-        if (Math.random() < flowerSpawnChance) {
-            // Pick a spot next to the pad (size + margin)
+        const flower = Math.random() < 0.3;
+        if (flower || Math.random() < 0.4) {
             const angle = Math.random() * Math.PI * 2;
-            const dist = size + scaleValue(15 + Math.random() * 20);
-            const fx = x + Math.cos(angle) * dist;
-            const fy = y + Math.sin(angle) * dist;
-
-            // Create flower instance
-            const flower = new Flower(fx, fy, size * 0.6);
-            // Give flower same delay as parent pad, plus a tiny bit
-            flower.popInDelay = pad.popInDelay + 0.2;
-            surfaceItems.push(flower);
-        }
-
-        // 20% chance to spawn a smaller lily pad nearby
-        else if (Math.random() < 0.4) {
-            // Pick a spot next to the pad (size + margin)
-            const angle = Math.random() * Math.PI * 2;
-            const dist = size + scaleValue(15 + Math.random() * 20);
-            const sx = x + Math.cos(angle) * dist;
-            const sy = y + Math.sin(angle) * dist;
-
-            // Create smaller lily pad instance
-            const smallPad = new LilyPad(sx, sy, size * 0.6);
-            // Give small pad same delay as parent pad, plus a tiny bit
-            smallPad.popInDelay = pad.popInDelay + 0.2;
-            surfaceItems.push(smallPad);
+            const distance = size + scaleValue(15 + Math.random() * 20);
+            const Type = flower ? Flower : LilyPad;
+            const neighbor = new Type(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance, size * 0.6);
+            neighbor.popInDelay = pad.popInDelay + 0.2;
+            surfaceItems.push(neighbor);
         }
     }
-
     spawnDuckweedClusters(surfaceItems);
-
-    const raftSize = scaleValue(75);
-    raft = new Raft(0, 0, raftSize);
-    raft.popInDelay = padCount * 0.1 + 0.3;
-    surfaceItems.push(raft);
-    positionRaft();
-
+    sortSurfaceItems();
     dragonflies = [];
     dragonflyTimer = Math.random() * 3600;
 }
 
-let dragonflyTimer = 0;
+function sortSurfaceItems() {
+    drawOrder = surfaceItems.slice().sort((a, b) => (a.layer || 0) - (b.layer || 0));
+}
 
-function animate() {
-    const now =
-        typeof performance !== "undefined" ? performance.now() : Date.now();
+function animate(now = performance.now()) {
     const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
+    const wallTime = Date.now();
     lastFrameTime = now;
-
     ctx.fillStyle = "#071c32";
     ctx.fillRect(0, 0, width, height);
+    pond.update(dt);
+    pond.drawBackground(ctx);
 
-    if (pond) {
-        pond.update(dt);
-        pond.drawBackground(ctx);
-    }
-
-    // Update surface items (needed for transforms/stems)
-    for (const item of surfaceItems) {
-        if (typeof item.update === "function") {
-            item.update(dt, now);
-        }
-    }
-
+    for (const item of surfaceItems) item.update(dt, now);
     SurfaceItem.resolveAll(surfaceItems);
-
-    // Draw all stems first (bottom layer, before everything else)
-    // Sort by layer to maintain z-order
-    const sortedItemsForStems = [...surfaceItems].sort((a, b) => (a.layer || 0) - (b.layer || 0));
-    for (const item of sortedItemsForStems) {
-        if (typeof item.drawStem === "function") {
-            item.drawStem(ctx);
-        }
-    }
-
+    for (const item of drawOrder) item.drawStem?.(ctx);
     for (const fish of fishes) {
-        fish.update(dt, bubbles);
-        fish.draw(ctx);
+        fish.update(dt, bubbles, wallTime);
+        fish.draw(ctx, wallTime);
     }
-
-    updateEffectList(bubbles, dt);
+    updateEffectList(bubbles, dt, wallTime);
     drawEffectList(bubbles, ctx);
-
-    if (pond) {
-        pond.drawOverlay(ctx);
-    }
-
-    updateEffectList(ripples, dt);
+    pond.drawOverlay(ctx);
+    updateEffectList(ripples, dt, wallTime);
     drawEffectList(ripples, ctx);
+    for (const item of drawOrder) item.draw(ctx);
 
-    // Draw surface items (on top of stems and fish)
-    // Sort by layer to maintain z-order: duckweed (0) < lilypad (1) < flower (2) < raft (3)
-    for (const item of sortedItemsForStems) {
-        item.draw(ctx);
-    }
-
-    dragonflyTimer--;
-    if (dragonflyTimer <= 0) {
+    if (--dragonflyTimer <= 0) {
         dragonflies.push(new Dragonfly(width, height));
         dragonflyTimer = Math.random() * 3600;
     }
-
-    updateEffectList(dragonflies, dt);
+    updateEffectList(dragonflies, dt, wallTime);
     drawEffectList(dragonflies, ctx);
-
     requestAnimationFrame(animate);
 }
 
-init();
-animate();
+function handlePointerDown(event) {
+    if (pointerId !== null || event.button !== 0) return;
+    const {clientX: x, clientY: y} = event;
+    if (handleFrogClick(x, y)) return;
+    if (beginSurfaceItemDrag(x, y)) {
+        pointerId = event.pointerId;
+        canvas.setPointerCapture(pointerId);
+        return;
+    }
+    for (const fish of fishes) fish.setTarget(x, y);
+    ripples.push(new Ripple(x, y));
+}
+
+function handlePointerMove(event) {
+    if (!draggingItem || event.pointerId !== pointerId) return;
+    const now = performance.now();
+    const dt = Math.max((now - lastDragSampleTime) / 1000, 0.001);
+    const previousX = draggingItem.x, previousY = draggingItem.y;
+    draggingItem.setPosition(event.clientX + dragOffsetX, event.clientY + dragOffsetY);
+    const dx = draggingItem.x - previousX, dy = draggingItem.y - previousY;
+    moveDuckweedGroup(dx, dy);
+    dragVelocityX = dx / dt;
+    dragVelocityY = dy / dt;
+    lastDragSampleTime = now;
+}
+
+function handlePointerUp(event) {
+    if (event.pointerId !== pointerId) return;
+    endSurfaceItemDrag();
+}
 
 function beginSurfaceItemDrag(x, y) {
     for (let i = surfaceItems.length - 1; i >= 0; i--) {
         const item = surfaceItems[i];
-        if (!item.containsPoint || !item.containsPoint(x, y)) continue;
-        const duckweedNeighbors =
-            typeof Duckweed !== "undefined" && item instanceof Duckweed
-                ? findDuckweedNeighbors(item, getDuckweedClusterRadius())
-                : null;
+        if (!item.beginDrag || !item.containsPoint?.(x, y)) continue;
         draggingItem = item;
-        draggingItem.beginDrag();
+        item.beginDrag();
         dragOffsetX = item.x - x;
         dragOffsetY = item.y - y;
-        dragVelocityX = 0;
-        dragVelocityY = 0;
-        lastDragSampleTime =
-            typeof performance !== "undefined" ? performance.now() : Date.now();
-        if (duckweedNeighbors && duckweedNeighbors.length) {
-            duckweedDragGroup = duckweedNeighbors;
-            for (const leaf of duckweedDragGroup) {
-                leaf.beginDrag();
-            }
-        } else {
-            duckweedDragGroup = null;
-        }
+        dragVelocityX = dragVelocityY = 0;
+        lastDragSampleTime = performance.now();
+        duckweedDragGroup = item instanceof Duckweed ? findDuckweedNeighbors(item, scaleValue(100)) : [];
+        for (const leaf of duckweedDragGroup) leaf.beginDrag();
         surfaceItems.splice(i, 1);
         surfaceItems.push(item);
+        sortSurfaceItems();
         return true;
     }
     return false;
@@ -351,200 +170,125 @@ function beginSurfaceItemDrag(x, y) {
 
 function endSurfaceItemDrag() {
     if (!draggingItem) return;
+    const capturedPointer = pointerId;
     draggingItem.releaseMomentum(dragVelocityX, dragVelocityY);
-    if (duckweedDragGroup && duckweedDragGroup.length) {
-        for (const leaf of duckweedDragGroup) {
-            leaf.releaseMomentum(dragVelocityX, dragVelocityY);
-        }
-        duckweedDragGroup = null;
-    }
+    for (const leaf of duckweedDragGroup) leaf.releaseMomentum(dragVelocityX, dragVelocityY);
+    duckweedDragGroup = [];
     draggingItem = null;
+    pointerId = null;
+    if (capturedPointer !== null && canvas.hasPointerCapture(capturedPointer)) canvas.releasePointerCapture(capturedPointer);
 }
 
-function updateEffectList(list, dt) {
-    for (let i = list.length - 1; i >= 0; i--) {
-        const effect = list[i];
-        effect.update(dt);
-        if (!effect.active) {
-            list.splice(i, 1);
-        }
+function updateEffectList(list, dt, now) {
+    let count = 0;
+    for (const effect of list) {
+        effect.update(dt, now);
+        if (effect.active) list[count++] = effect;
     }
+    list.length = count;
 }
 
 function drawEffectList(list, ctx) {
-    for (const effect of list) {
-        effect.draw(ctx);
-    }
+    for (const effect of list) effect.draw(ctx);
 }
 
-function spawnDuckweedClusters(surfaceItems) {
-    if (!surfaceItems || typeof Duckweed === "undefined") return;
-
+function spawnDuckweedClusters(items) {
     const clusters = 2 + Math.floor(Math.random() * 2);
     const margin = scaleValue(30);
-
-    for (let c = 0; c < clusters; c++) {
-        const centerX = margin + Math.random() * (width - margin * 2);
-        const centerY = margin + Math.random() * (height - margin * 2);
-        const clusterRadius = scaleValue(20 + Math.random() * 80);
-        const baseDelay = surfaceItems.length * 0.05 + c * 0.08;
-
-        spawnDuckweedClusterAt(surfaceItems, centerX, centerY, {
-            radius: clusterRadius,
+    for (let i = 0; i < clusters; i++) {
+        const x = margin + Math.random() * (width - margin * 2);
+        const y = margin + Math.random() * (height - margin * 2);
+        spawnDuckweedClusterAt(items, x, y, {
+            radius: scaleValue(20 + Math.random() * 80),
             leafMin: 8,
             leafMax: 47,
-            baseDelay,
-            margin,
+            baseDelay: items.length * 0.05 + i * 0.08,
+            margin
         });
     }
 }
 
-function spawnDuckweedClusterAt(surfaceItems, centerX, centerY, options = {}) {
-    if (!surfaceItems || typeof Duckweed === "undefined") return;
-
-    const {
-        radius = scaleValue(45),
-        leafMin = 3,
-        leafMax = 6,
-        baseDelay = surfaceItems.length * 0.05,
-        margin = scaleValue(30),
-        minSpacing = scaleValue(12),
-        attemptsPerLeaf = 6,
-    } = options;
-
-    const minCount = Math.max(1, Math.floor(leafMin));
-    const maxCount = Math.max(minCount, Math.floor(leafMax));
-    const leaves = minCount + Math.floor(Math.random() * (maxCount - minCount + 1));
-    const placedLeaves = [];
-
-    for (let i = 0; i < leaves; i++) {
-        let placed = false;
-        let attempt = 0;
-        while (!placed && attempt < attemptsPerLeaf) {
-            attempt++;
+function spawnDuckweedClusterAt(items, centerX, centerY, {
+    radius = scaleValue(45), leafMin = 3, leafMax = 6,
+    baseDelay = items.length * 0.05, margin = scaleValue(30),
+    minSpacing = scaleValue(12), attemptsPerLeaf = 6
+} = {}) {
+    const min = Math.max(1, Math.floor(leafMin));
+    const max = Math.max(min, Math.floor(leafMax));
+    const count = min + Math.floor(Math.random() * (max - min + 1));
+    const placed = [];
+    for (let i = 0; i < count; i++) {
+        for (let attempt = 0; attempt < attemptsPerLeaf; attempt++) {
             const angle = Math.random() * Math.PI * 2;
             const distance = radius * (0.35 + Math.pow(Math.random(), 0.65) * 0.65);
-            const skewX = 0.75 + Math.random() * 0.5;
-            const skewY = 0.75 + Math.random() * 0.5;
-            const candidateX = clamp(centerX + Math.cos(angle) * distance * skewX, margin, width - margin);
-            const candidateY = clamp(centerY + Math.sin(angle) * distance * skewY, margin, height - margin);
-
-            let tooClose = false;
-            for (const existing of placedLeaves) {
-                if (Math.hypot(existing.x - candidateX, existing.y - candidateY) < minSpacing) {
-                    tooClose = true;
-                    break;
-                }
-            }
-
-            if (tooClose) continue;
-
-            placedLeaves.push({ x: candidateX, y: candidateY });
-            const size = scaleValue(5 + Math.random() * 6);
-            const leaf = new Duckweed(candidateX, candidateY, size);
+            const skewX = 0.75 + Math.random() * 0.5, skewY = 0.75 + Math.random() * 0.5;
+            const x = clamp(centerX + Math.cos(angle) * distance * skewX, margin, width - margin);
+            const y = clamp(centerY + Math.sin(angle) * distance * skewY, margin, height - margin);
+            if (placed.some(leaf => (leaf.x - x) ** 2 + (leaf.y - y) ** 2 < minSpacing ** 2)) continue;
+            const leaf = new Duckweed(x, y, scaleValue(5 + Math.random() * 6));
             leaf.popInDelay = baseDelay + i * 0.03;
-            surfaceItems.push(leaf);
-            placed = true;
+            placed.push(leaf);
+            items.push(leaf);
+            break;
         }
     }
 }
 
-function moveDuckweedGroup(deltaX, deltaY) {
-    if (!duckweedDragGroup || (!deltaX && !deltaY)) return;
-    for (const leaf of duckweedDragGroup) {
-        const x = clamp(leaf.x + deltaX, 0, width);
-        const y = clamp(leaf.y + deltaY, 0, height);
-        leaf.setPosition(x, y);
-    }
+function moveDuckweedGroup(dx, dy) {
+    if (!dx && !dy) return;
+    for (const leaf of duckweedDragGroup) leaf.setPosition(clamp(leaf.x + dx, 0, width), clamp(leaf.y + dy, 0, height));
 }
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
-function getDuckweedClusterRadius() {
-    return scaleValue(BASE_DUCKWEED_CLUSTER_RADIUS);
-}
-
 function findDuckweedNeighbors(source, radius) {
-    if (!surfaceItems || !(source instanceof Duckweed)) return [];
-    const neighbors = [];
-    for (const candidate of surfaceItems) {
-        if (candidate === source || !(candidate instanceof Duckweed)) continue;
-        const dist = Math.hypot(candidate.x - source.x, candidate.y - source.y);
-        if (dist <= radius) {
-            neighbors.push(candidate);
-        }
-    }
-    return neighbors;
-}
-
-function handlePassiveFrogJump(frog) {
-    // Simulate a click on the frog - uses exact same code path as user click
-    handleFrogClick(frog.x, frog.y);
+    return surfaceItems.filter(item => item !== source && item instanceof Duckweed
+        && (item.x - source.x) ** 2 + (item.y - source.y) ** 2 <= radius ** 2);
 }
 
 function handleFrogClick(x, y) {
-    // Find clicked frog
     for (const item of surfaceItems) {
-        if (!(item instanceof Frog)) continue;
-        if (!item.containsPoint(x, y)) continue;
-        if (item.isJumping) continue;
-        
-        // Found a frog - find closest unoccupied pad (exclude current and previous pad, and pads smaller than frog)
-        let targetPad = findClosestUnoccupiedPad(item.x, item.y, item.parentPad, item.previousPad, item.frogSize);
-        
-        // If no valid pad found, allow jumping back to previous pad as fallback
-        if (!targetPad && item.previousPad) {
-            // Check if previous pad is large enough and not occupied
-            const frogs = surfaceItems.filter(f => f instanceof Frog);
-            const isOccupied = frogs.some(f => f.parentPad === item.previousPad || f.jumpTargetPad === item.previousPad);
-            if (!isOccupied && item.previousPad.size >= item.frogSize * 1.2) {
-                targetPad = item.previousPad;
-            }
-        }
-        
-        if (targetPad) {
-            item.jumpTo(targetPad);
-            ripples.push(new Ripple(item.x, item.y));
-            return true;
-        }
+        if (item instanceof Frog && !item.isJumping && item.containsPoint(x, y) && jumpFrog(item)) return true;
     }
     return false;
 }
 
-function findClosestUnoccupiedPad(fromX, fromY, excludePad, previousPad, minPadSize) {
-    // Get all frogs to check occupancy
-    const frogs = surfaceItems.filter(item => item instanceof Frog);
-    const occupiedPads = new Set(frogs.map(f => f.parentPad).filter(p => p));
-    
-    // Also exclude pads that are jump targets
-    for (const frog of frogs) {
-        if (frog.jumpTargetPad) {
-            occupiedPads.add(frog.jumpTargetPad);
-        }
+function jumpFrog(frog) {
+    if (frog.isJumping) return false;
+    let target = findClosestUnoccupiedPad(frog.x, frog.y, frog.parentPad, frog.previousPad, frog.frogSize);
+    const previous = frog.previousPad;
+    if (!target && previous && previous.size >= frog.frogSize * 1.2
+        && !surfaceItems.some(item => item instanceof Frog && (item.parentPad === previous || item.jumpTargetPad === previous))) {
+        target = previous;
     }
-    
-    let closestPad = null;
-    let closestDist = Infinity;
-    
-    for (const item of surfaceItems) {
-        // Only consider LilyPad instances, explicitly exclude Flowers
-        if (!(item instanceof LilyPad)) continue;
-        if (typeof Flower !== "undefined" && item instanceof Flower) continue;
-        if (item === excludePad) continue;
-        if (item === previousPad) continue; // Don't jump back to previous pad
-        if (occupiedPads.has(item)) continue;
-        
-        // Exclude pads that aren't at least 20% bigger than the frog
-        if (minPadSize && item.size < minPadSize * 1.2) continue;
-        
-        const dist = Math.hypot(item.x - fromX, item.y - fromY);
-        if (dist < closestDist) {
-            closestDist = dist;
-            closestPad = item;
-        }
-    }
-    
-    return closestPad;
+    if (!target) return false;
+    frog.jumpTo(target);
+    ripples.push(new Ripple(frog.x, frog.y));
+    return true;
 }
+
+function findClosestUnoccupiedPad(x, y, excludePad, previousPad, minPadSize = 0) {
+    const occupied = new Set();
+    for (const item of surfaceItems) {
+        if (item instanceof Frog) {
+            occupied.add(item.parentPad);
+            occupied.add(item.jumpTargetPad);
+        }
+    }
+    let closest = null, distance = Infinity;
+    for (const item of surfaceItems) {
+        if (!(item instanceof LilyPad) || item instanceof Flower || item === excludePad || item === previousPad
+            || occupied.has(item) || item.size < minPadSize * 1.2) continue;
+        const squared = (item.x - x) ** 2 + (item.y - y) ** 2;
+        if (squared < distance) {
+            closest = item;
+            distance = squared;
+        }
+    }
+    return closest;
+}
+
+init();
+animate();

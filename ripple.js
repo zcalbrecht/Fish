@@ -1,68 +1,41 @@
 class Ripple extends Effect {
     constructor(x, y) {
         super(x, y);
+        const scale = ResponsiveScale.getScale();
         this.radius = 0;
-        this.maxRadius = ResponsiveScale.scaleValue(80);
+        this.maxRadius = 80 * scale;
         this.alpha = 0.4;
-        this.speed = ResponsiveScale.scaleValue(80); // Units per second (faster expansion for snappier feel)
-        this.lineWidth = ResponsiveScale.scaleValue(6);
-        this.splashThreshold = ResponsiveScale.scaleValue(20);
-        this.splashBase = ResponsiveScale.scaleValue(5);
-        this.ringOffsets = [
-            0,
-            -ResponsiveScale.scaleValue(20),
-            -ResponsiveScale.scaleValue(40),
-        ];
+        this.speed = 80 * scale;
+        this.lineWidth = 6 * scale;
+        this.splashThreshold = 20 * scale;
+        this.splashBase = 5 * scale;
+        this.ringSpacing = 20 * scale;
     }
 
     update(dt = 0.016) {
         this.radius += this.speed * dt;
-        if ((this.radius - 120) >= this.maxRadius) {
-            this.active = false;
-        }
+        this.active = this.radius < this.maxRadius + this.ringSpacing * 2;
     }
-
 
     draw(ctx) {
+        if (!this.active) return;
         ctx.save();
-
+        ctx.fillStyle = ctx.strokeStyle = "rgb(200, 230, 255)";
+        ctx.lineWidth = this.lineWidth;
         if (this.radius < this.splashThreshold) {
-            const splashProgress = this.radius / this.splashThreshold;
-            const splashAlpha = this.alpha * (1 - splashProgress);
-            if (splashAlpha > 0) {
-                ctx.fillStyle = `rgba(200, 230, 255, ${splashAlpha})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.splashBase + this.radius * 0.5, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            ctx.globalAlpha = this.alpha * (1 - this.radius / this.splashThreshold);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.splashBase + this.radius * 0.5, 0, Math.PI * 2);
+            ctx.fill();
         }
-
-        this.drawRing(ctx, this.ringOffsets[0], this.alpha);
-        this.drawRing(ctx, this.ringOffsets[1], this.alpha * 0.8);
-        this.drawRing(ctx, this.ringOffsets[2], this.alpha * 0.6);
-
+        for (let i = 0; i < 3; i++) {
+            const radius = this.radius - this.ringSpacing * i;
+            if (radius <= 0 || radius >= this.maxRadius) continue;
+            ctx.globalAlpha = this.alpha * (1 - i * 0.2) * (1 - radius / this.maxRadius);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
         ctx.restore();
-    }
-
-    drawRing(ctx, offset, startingOpacity) {
-        const r = this.radius + offset;
-        if (r > 0) {
-            const progress = r / this.maxRadius;
-            const p = Math.max(0, Math.min(1, progress));
-            const currentAlpha = startingOpacity * (1 - p);
-
-            if (currentAlpha > 0) {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
-                ctx.strokeStyle = `rgba(200, 230, 255, ${currentAlpha})`;
-                ctx.lineWidth = this.lineWidth;
-                ctx.stroke();
-            }
-        }
-    }
-
-    isFinished() {
-        // Deprecated, check .active instead
-        return !this.active;
     }
 }
